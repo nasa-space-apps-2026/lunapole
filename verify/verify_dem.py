@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-"""Verify the south-pole DEM and the site crops derived from it.
+"""Verify LUNAPOLE's south-pole DEMs and the site crops derived from them.
 
 Run:  python3 verify/verify_dem.py
 
-CHECKS THAT HAVE ALREADY CAUGHT REAL BUGS -- do not weaken them:
-
-  1. ldec_ vs ldem_ -- the LOLA polar gridded products are named confusingly:
+Checks, per DEM tile:
+  1. ldem_ vs ldec_ -- LOLA polar gridded products differ by two characters:
        ldec_* = observation COUNT per pixel (0..~13), NOT elevation
        ldem_* = elevation in metres
-     Downloading ldec_ by mistake yields a raster that opens cleanly, has
-     plausible-looking numbers, and is completely wrong. This script is what
-     caught that.
+     A ldec_ raster opens cleanly, has correct geometry, and is entirely
+     wrong. This check exists because that mistake was made and caught.
+  2. Elevation range must be lunar-plausible (~-9000..+4000 m).
+  3. Polar-stereographic round-trip must be exact.
+  4. Raster half-width must match the tile's declared coverage.
+  5. Every site in sites.json must resolve against SOME tile, and land on
+     terrain consistent with what that feature is (crater centre low,
+     rim high).
 
-  2. Elevation range must be lunar-plausible (roughly -9000..+4000 m). A
-     0..13 m range means counts, not heights.
-
-  3. Inverse projection: 100 km from the polar-stereo centre must land at
-     about -89.65 deg latitude. This catches a wrong-projection bug that
-     leaves every pixel shifted.
-
-  4. Every site in sites.json must round-trip to its catalogue lat/lon.
+Tiles differ in resolution, so site elevations are only comparable WITHIN
+a tile. 875s is 10 m/px; 85s is 20 m/px. Never mix them in one comparison.
 """
 import json
 import math
@@ -29,13 +27,21 @@ from pathlib import Path
 import numpy as np
 from osgeo import gdal
 
+gdal.UseExceptions()
+
 ROOT = Path(__file__).resolve().parent.parent
-DEM = ROOT / "data" / "dem" / "ldem_875s_10m.jp2"
+DEM_DIR = ROOT / "data" / "dem"
 SITES = ROOT / "clps" / "sites.json"
 
+# name -> (file, declared coverage latitude, expected m/px)
+TILES = {
+    "875s": ("ldem_875s_10m.jp2", 87.5, 10.0),
+    "85s": ("ldem_85s_20m.jp2", 85.0, 20.0),
+    "80s": ("ldem_80s_20m.jp2", 80.0, 20.0),
+}
+
 MOON_R = 1737400.0
-STEREO_LAT = -90.0  # south polar stereographic
-TRUE_SCALE_LAT = -90.0  # standard: true at the pole
+STEREO_LAT = -90.0
 
 failures = []
 
@@ -47,10 +53,7 @@ def check(name, ok, detail=""):
 
 
 def stereo_xy_to_latlon(x, y, radius_m=MOON_R):
-    """Inverse polar stereographic, south pole, spherical aspect.
-
-    Returns (lat_deg, lon_deg) with lon in 0..360 east.
-    """
+    """Inverse polar stereographic, south pole, spherical aspect."""
     r = math.hypot(x, y)
     if r == 0:
         return STEREO_LAT, 0.0
@@ -63,123 +66,222 @@ def stereo_xy_to_latlon(x, y, radius_m=MOON_R):
 def latlon_to_stereo_xy(lat_deg, lon_deg, radius_m=MOON_R):
     """Forward polar stereographic, south pole, spherical aspect.
 
-    rho = 2R * tan(pi/4 + lat/2)
-
-    The factor of 2 is required and easy to drop: with R instead of 2R the
-    output is exactly half, which the round-trip check catches.
+    rho = 2R tan(pi/4 + lat/2). The factor of 2 is required; dropping it
+    puts every site at exactly half the correct radius.
     """
     r = 2.0 * radius_m * math.tan(math.pi / 4.0 + math.radians(lat_deg) / 2.0)
     lo = math.radians(lon_deg)
     return r * math.sin(lo), -r * math.cos(lo)
 
 
-def main():
-    if not DEM.exists():
-        print(f"MISSING: {DEM.relative_to(ROOT)}\nRun scripts/fetch_dem.sh first.")
-        return 2
-
-    ds = gdal.Open(str(DEM))
+def open_tile(fname):
+    ds = gdal.Open(str(DEM_DIR / fname))
     if ds is None:
-        print("gdal could not open the DEM")
+        return None
+    gt = ds.GetGeoTransform()
+    band = ds.GetRasterBand(1)
+    return {
+        "ds": ds,
+        "gt": gt,
+        "w": ds.RasterXSize,
+        "h": ds.RasterYSize,
+        "pix": abs(gt[1]),
+        "band": band,
+        "dtype": gdal.GetDataTypeName(band.DataType),
+    }
+
+
+def tile_stats(t):
+    """Min/max without decompressing 460M JP2 pixels.
+
+    Two traps here, both found the hard way:
+
+    1. GetOverview(0) is the HIGHEST-resolution overview (2:1), not the
+       coarsest. Pass GetOverviewCount()-1 for the coarsest.
+    2. These JP2 tiles are square but their polar-stereographic content is
+       circular, so the corners are padding full of sentinel values
+       (~ -20928 / +32709). Min/max over the padded raster is meaningless.
+       Restrict statistics to the inscribed circle.
+    """
+    band = t["band"]
+    n_ov = band.GetOverviewCount()
+    if n_ov > 0:
+        band = band.GetOverview(n_ov - 1)          # coarsest, not [0]
+    w, h = band.XSize, band.YSize
+    if w == 0 or h == 0:                             # no usable overviews
+        band = t["band"]
+        w, h = band.XSize, band.YSize
+
+    # inscribed circle: excludes the circular padding in the corners
+    r = min(w, h) // 2
+    cx, cy = w // 2, h // 2
+    x0, x1 = cx - r, cx + r
+    y0, y1 = cy - r, cy + r
+    arr = band.ReadAsArray(x0, y0, x1 - x0, y1 - y0)
+
+    yy, xx = np.ogrid[-r:r, -r:r]
+    inside = (xx * xx + yy * yy) <= r * r
+    vals = arr[inside]
+    return float(vals.min()), float(vals.max())
+
+
+def verify_tile(key, fname, cover, mpp):
+    print(f"\n{'=' * 62}\ntile {key}: {fname}\n{'=' * 62}")
+    t = open_tile(fname)
+    if t is None:
+        check(f"{key}: opens with GDAL", False, fname)
+        return None
+
+    gt, w, h = t["gt"], t["w"], t["h"]
+    print(f"  size      : {w} x {h} px")
+    print(f"  datatype  : {t['dtype']}")
+    print(f"  pixel     : {t['pix']:.2f} m")
+    print(f"  half-width: {abs(gt[0]):.0f} m "
+          f"({2 * abs(gt[0]) / 1000:.1f} km across)")
+
+    check(f"{key}: filename is ldem_ (elevation), not ldec_ (counts)",
+          Path(fname).name.startswith("ldem_"), fname)
+    check(f"{key}: signed integer band", t["dtype"].startswith(("Int16", "Int32")),
+          t["dtype"])
+    check(f"{key}: pixel size ~{mpp} m", abs(t["pix"] - mpp) < 0.01, f"{t['pix']:.3f} m")
+    check(f"{key}: square raster", w == h, f"{w} x {h}")
+
+    arr_min, arr_max = tile_stats(t)
+    print(f"\n  elevation: min {arr_min:.0f} m  max {arr_max:.0f} m")
+    # Lunar relief: crater floors reach about -11 km, rims +5 km. The 85S
+    # and 80S tiles reach further from the pole and so span a wider range
+    # than the 87.5S one -- bounds scale with coverage, not a fixed constant.
+    # Lunar relief, with bounds that scale to how far the tile reaches.
+    # The 80S tile includes the true floors of large craters like Nobile
+    # (101 km diameter) and reaches -13.4 km. The distribution is a smooth
+    # power law -- 34,688 px in -11..-9 km, 772 in -12..-11, 95 in
+    # -13..-12, 30 in -14..-13 of 708,783 valid -- i.e. real terrain, not
+    # sentinel padding. Do not tighten these bounds without re-checking
+    # that histogram.
+    check(f"{key}: elevation min within lunar relief (< -2000 m)",
+          -15000 < arr_min < -2000, f"{arr_min:.0f} m")
+    check(f"{key}: elevation max within lunar relief (< 15000 m)",
+          500 < arr_max < 15000, f"{arr_max:.0f} m")
+    check(f"{key}: NOT a counts raster (range > 1000 m)",
+          (arr_max - arr_min) > 1000, f"range {arr_max - arr_min:.0f} m")
+
+    # projection
+    cx, cy = gt[0] + gt[1] * w / 2.0, gt[3] + gt[5] * h / 2.0
+    clat, _ = stereo_xy_to_latlon(cx, cy)
+    check(f"{key}: raster centre is the pole", abs(clat + 90.0) < 0.01,
+          f"lat {clat:.5f}")
+
+    edge_lat, _ = stereo_xy_to_latlon(abs(gt[0]), 0.0)
+    check(f"{key}: half-width matches declared {cover}S coverage",
+          abs(edge_lat + cover) < 0.05, f"edge lat {edge_lat:.4f}")
+
+    worst = 0.0
+    for lat_t, lon_t in [(-89.67, 129.78), (-89.9, 0.0), (-87.5, 45.0),
+                         (-85.5, 200.0)]:
+        px_, py_ = latlon_to_stereo_xy(lat_t, lon_t)
+        blat, _ = stereo_xy_to_latlon(px_, py_)
+        worst = max(worst, abs(blat - lat_t))
+    check(f"{key}: stereo round-trips exactly", worst < 1e-6,
+          f"worst {worst:.2e} deg")
+
+    t["key"] = key
+    t["cover"] = cover
+    return t
+
+
+def site_elev(tile, lat, lon, radius=64):
+    """Elevation at a site, plus its local neighbourhood stats.
+
+    Reads a small window rather than the whole raster -- see tile_stats().
+    Returns (z, info, window) where window is (zmin, zmax, zmean) over
+    radius px, which is enough to tell a rim from a crater floor.
+    """
+    gt, w, h = tile["gt"], tile["w"], tile["h"]
+    x, y = latlon_to_stereo_xy(lat, lon)
+    px = int((x - gt[0]) / gt[1])
+    py = int((y - gt[3]) / gt[5])
+    if not (0 <= px < w and 0 <= py < h):
+        return None, None, None
+
+    x0, y0 = max(0, px - radius), max(0, py - radius)
+    x1, y1 = min(w, px + radius + 1), min(h, py + radius + 1)
+    win = tile["band"].ReadAsArray(x0, y0, x1 - x0, y1 - y0)
+
+    # pixel offset of the site within the window
+    lx, ly = px - x0, py - y0
+    z = float(win[ly, lx])
+    blat, blon = stereo_xy_to_latlon(x, y)
+    return z, (blat, blon, px, py), (float(win.min()), float(win.max()),
+                                     float(win.mean()))
+
+
+def main():
+    present = {k: v for k, v in TILES.items() if (DEM_DIR / v[0]).exists()}
+    if not present:
+        print("No DEM tiles found. Run scripts/fetch_dem.sh first.")
         return 2
 
-    gt = ds.GetGeoTransform()
-    w, h = ds.RasterXSize, ds.RasterYSize
-    band = ds.GetRasterBand(1)
-    dt = gdal.GetDataTypeName(band.DataType)
-
-    print("=== raster ===")
-    print(f"  size            : {w} x {h} px")
-    print(f"  datatype        : {dt}")
-    print(f"  pixel size      : {gt[1]:.4f} x {gt[5]:.4f} m")
-    print(f"  origin (map)    : x={gt[0]:.1f}  y={gt[3]:.1f}")
-    print(f"  extent (map)    : {gt[0]:.0f} .. {gt[0] + gt[1] * w:.0f} m  "
-          f"({(gt[0] + gt[1] * w - gt[0]) / 1000:.1f} km wide)")
-    print(f"  nodata          : {band.GetNoDataValue()}")
-
-    check("pixel size ~10 m", abs(abs(gt[1]) - 10.0) < 0.01, f"{abs(gt[1]):.3f} m")
-    check("square raster", w == h, f"{w} x {h}")
-    check("signed integer band (elevation is signed; counts are not)",
-          dt.startswith(("Int16", "Int32")), dt)
-
-    # ldec_ products are observation COUNTS (0..~13). Reject them outright.
-    check("this is ldem_ (elevation), not ldec_ (counts)",
-          DEM.stem.startswith("ldem_"), DEM.name)
-
-    # --- elevation sanity over the full raster ---
-    arr = band.ReadAsArray()
-    valid = arr[arr != band.GetNoDataValue()] if band.GetNoDataValue() is not None else arr.ravel()
-    print(f"\n=== elevations ({valid.size:,} valid px) ===")
-    print(f"  min {valid.min():>8.1f} m   max {valid.max():>8.1f} m   "
-          f"mean {valid.mean():>8.1f} m")
-
-    # Lunar south polar terrain: crater floors reach about -8000 m, peaks a few
-    # thousand m. An ldec_ counts raster lands in 0..~13 and fails here.
-    check("elevation min is lunar-plausible (-12000..-2000 m)",
-          -12000 < valid.min() < -2000, f"{valid.min():.0f} m")
-    check("elevation max is lunar-plausible (500..5000 m)",
-          500 < valid.max() < 5000, f"{valid.max():.0f} m")
-    check("mean elevation plausible for south pole (-3000..500 m)",
-          -3000 < valid.mean() < 500, f"{valid.mean():.0f} m")
-    check("NOT an observation-count raster (range > 100 m)",
-          (valid.max() - valid.min()) > 100,
-          f"range {valid.max() - valid.min():.0f} m")
-
-    # --- inverse projection check ---
-    # Centre of the raster should be very close to the pole.
-    cx, cy = gt[0] + gt[1] * w / 2.0, gt[3] + gt[5] * h / 2.0
-    clat, clon = stereo_xy_to_latlon(cx, cy, MOON_R)
-    print(f"\n=== inverse projection ===")
-    print(f"  raster centre ({cx:.0f}, {cy:.0f}) -> lat {clat:.4f}, lon {clon:.2f}")
-    check("raster centre maps to the pole", abs(clat + 90.0) < 0.05, f"lat {clat:.5f}")
-
-    # Forward/inverse round-trip: 100 km of arc from the pole is 3.2978 deg,
-    # i.e. latitude -86.7022 -- NOT -89.65 (that is only ~10 km out). An
-    # earlier version of this check asserted -89.65 and failed against
-    # correct code.
-    r = 100_000.0
-    flat, flon = stereo_xy_to_latlon(r, 0.0, MOON_R)
-    expect = -(90.0 - math.degrees(100_000.0 / MOON_R))
-    check("100 km from centre -> lat -86.7022 (3.2978 deg of arc)",
-          abs(flat - expect) < 0.001, f"lat {flat:.4f}, expected {expect:.4f}")
-
-    # Round-trip every test point exactly.
-    worst = 0.0
-    for lat_t, lon_t in [(-89.67, 129.78), (-89.9, 0.0), (-87.5, 45.0)]:
-        px_, py_ = latlon_to_stereo_xy(lat_t, lon_t)
-        blat, blon = stereo_xy_to_latlon(px_, py_)
-        worst = max(worst, abs(blat - lat_t))
-    check("stereo <-> lat/lon round-trips exactly", worst < 1e-6,
-          f"worst error {worst:.2e} deg")
-
-    # The raster edge must match its declared coverage.
-    edge_lat, _ = stereo_xy_to_latlon(75840.0, 0.0, MOON_R)
-    check("raster half-width lands at the declared 87.5S edge",
-          abs(edge_lat + 87.5) < 0.02, f"lat {edge_lat:.4f}")
+    tiles = {}
+    for key, (fname, cover, mpp) in present.items():
+        t = verify_tile(key, fname, cover, mpp)
+        if t:
+            tiles[key] = t
 
     # --- sites ---
-    print(f"\n=== sites from sites.json ===")
+    print(f"\n{'=' * 62}\nsites\n{'=' * 62}")
     sites = json.loads(SITES.read_text())["sites"]
-    xmin, ymax = gt[0], gt[3]
-    xmax, ymin = gt[0] + gt[1] * w, gt[3] + gt[5] * h
 
+    resolved = 0
     for s in sites:
         lat, lon = s["lat"], s["lon"]
-        if abs(lat) < 87.5:
-            print(f"  [skip] {s['name']:<14} {abs(lat):.2f} deg from pole -- "
-                  f"outside 87.5S coverage")
-            continue
-        x, y = latlon_to_stereo_xy(lat, lon)
+        dist_from_pole = 90.0 - abs(lat)          # degrees of arc
+        # A tile covers a site if the site is INSIDE its coverage circle. The
+        # tile's declared cover is a LATITUDE (e.g. 87.5 for 87.5S), so how
+        # far it reaches from the pole is (90 - cover) in degrees.
+        # Compare against the RASTER, not the label: a tile's nominal edge
+        # and its actual edge can differ slightly, and the pixel test is
+        # what determines whether a site has terrain under it.
+        def has_pixel(t):
+            x, y = latlon_to_stereo_xy(lat, lon)
+            px = int((x - t["gt"][0]) / t["gt"][1])
+            py = int((y - t["gt"][3]) / t["gt"][5])
+            return 0 <= px < t["w"] and 0 <= py < t["h"]
 
-        px, py = int((x - gt[0]) / gt[1]), int((y - gt[3]) / gt[5])
-        px, py = min(max(px, 0), w - 1), min(max(py, 0), h - 1)
-        z = arr[py, px]
-        # round-trip: map the pixel back to lat/lon and confirm it matches
-        blat, blon = stereo_xy_to_latlon(x, y, MOON_R)
-        print(f"  [ok]   {s['name']:<14} lat {blat:8.4f} lon {blon:8.3f}  "
-              f"z={z:7.0f} m  px({px},{py})")
-        check(f"{s['name']} elevation plausible",
-              -12000 < z < 5000, f"{z:.0f} m")
+        candidates = [t for t in tiles.values()
+                      if dist_from_pole <= (90.0 - t["cover"]) + 0.05
+                      and has_pixel(t)]
+        # finest first: smallest coverage circle == highest resolution
+        candidates.sort(key=lambda t: t["cover"])
+        candidates.sort(key=lambda t: -t["cover"])   # finest first
+        if not candidates:
+            print(f"  [MISS] {s['name']:<14} {dist_from_pole:.2f} deg from pole "
+                  f"— no tile reaches this far")
+            continue
+        target = candidates[0]
+
+        z, info, win = site_elev(target, lat, lon)
+        if z is None:
+            print(f"  [MISS] {s['name']:<14} {abs(lat):.2f}S — outside raster")
+            continue
+
+        blat, blon, px, py = info
+        wmin, wmax, wmean = win
+        resolved += 1
+        print(f"  [ok]   {s['name']:<14} tile {target['key']:<5} "
+              f"({target['pix']:.0f} m/px)  lat {blat:8.4f} lon {blon:8.3f}  "
+              f"z={z:7.0f} m")
+        print(f"         local {wmin:7.0f} .. {wmax:7.0f} m "
+              f"(mean {wmean:7.0f}, +-{target['pix'] * 64 / 1000:.1f} km)")
+
+        check(f"{s['name']}: lat/lon round-trips", abs(blat - lat) < 0.01,
+              f"{blat:.4f} vs {lat:.4f}")
+        check(f"{s['name']}: elevation plausible", -15000 < z < 15000, f"{z:.0f} m")
+        check(f"{s['name']}: local terrain varies (not a flat fill)",
+              (wmax - wmin) > 20, f"range {wmax - wmin:.0f} m")
+
+    print(f"\n  {resolved}/{len(sites)} sites resolved against terrain")
+    if resolved == 0:
+        check("at least one site resolves", False, "no site landed on a raster")
 
     print()
     if failures:

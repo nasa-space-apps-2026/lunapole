@@ -125,17 +125,45 @@ Leibnitz crater is real but sits at **−38.17, 179.54** — nowhere near the po
 
 ---
 
-### 5. The DEM is tiled, and 25 m/px is fantasy
+### 5. DEM: RESOLVED — and better resolution than the spec assumed
 
-The spec assumed one ~1 GB `LDEM_75S` file plus a companion `LDEM_87S` "band". Reality:
+**Status: done.** Three PDS tiles fetched and verified, covering all six catalogue sites.
 
-- **`LDEM_87S` does not exist** as a standard product. The 87°S band plan is fictional.
-- LOLA gridded products are distributed as **tiles** through PDS/Astrogeology, not a single file.
-- **25 m/px cannot come from LOLA.** Native gridded resolution at the poles is 118 m/px. Getting to 25 m/px requires LROC NAC stereo DEMs (~1–2 m/px), which have limited and non-contiguous coverage.
+| Tile | Coverage | Resolution | Size |
+|---|---|---|---|
+| `ldem_875s_10m.jp2` | 87.5°S–90°S | **10 m/px** | 62 MB |
+| `ldem_85s_20m.jp2` | 85°S–90°S | **20 m/px** | 76 MB |
+| `ldem_80s_20m.jp2` | 80°S–90°S | **20 m/px** | 255 MB |
 
-**Impact:** the acquisition step in §6.1 is wrong in a way that blocks everything downstream. Someone must resolve exact tile URLs and decide the resolution strategy before a single DEM pixel exists.
+Real path (the `lro/lola/` tree is a dead end):
+```
+https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/jp2/
+```
 
-**Good news:** all sources are US public domain. No account, no EULA, no registration anywhere. Once tiles are identified, downloads are fast and unencumbered.
+**Correction to the spec's ceiling:** the spec assumed 118 m/px was the best available and that 25 m/px was fantasy. **10 m/px is real** for the innermost 2.5° of latitude. This materially improves horizon precision for Shackleton and de Gerlache — the two sites that matter most.
+
+**The trap that costs the most time: `ldem_` vs `ldec_`.** These differ by two characters and mean completely different things:
+- `ldem_*` — elevation in metres
+- `ldec_*` — observation **count** per pixel (0–13)
+
+A `ldec_` file opens cleanly, reports correct raster geometry and datatype, and produces "elevations" of 0–13 m. Nothing about the file looks wrong. `verify_dem.py` caught it on first run; the assertion now rejects it explicitly.
+
+**Verified site elevations (all 6 resolve):**
+
+| Site | Tile | Elevation | Local range |
+|---|---|---|---|
+| Shackleton | 875s (10 m) | **1515 m** | 1087–1917 m |
+| de Gerlache | 875s (10 m) | **−3392 m** | −3906 to −2795 m |
+| Haworth | 85s (20 m) | −5713 m | −5988 to −5641 m |
+| Nobile | 85s (20 m) | −6481 m | −6619 to −6419 m |
+| Malapert | 80s (20 m) | −4902 m | −5383 to −4390 m |
+| Cabeus | 80s (20 m) | −5607 m | −5872 to −4947 m |
+
+Shackleton's 1515 m is the crater **rim**; de Gerlache's −3392 m is its **floor**. The local ranges confirm genuine topography, not a flat fill.
+
+**Two GDAL performance notes** (in `verify_dem.py`): reading all three rasters in full takes 10+ minutes — use overviews. And `GetOverview(0)` is the *highest*-resolution overview, not the coarsest; use `GetOverviewCount()-1`. These tiles are square but their polar-stereographic content is circular, so corners are sentinel padding — restrict statistics to the inscribed circle or min/max becomes meaningless.
+
+**Resolution caveat for the UI:** sites differ by tile (10 m vs 20 m), so horizon precision differs between them. Say so rather than implying uniform precision.
 
 ---
 

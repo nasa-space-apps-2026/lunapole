@@ -29,15 +29,19 @@ fetch() {
 echo "Polar gridded DEMs (polar stereographic, south, true at pole)"
 
 # 87.5S-90S at 10 m/px, 62 MB. Covers Shackleton (-89.67) and
-# de Gerlache (-88.50). This is the core tile.
+# de Gerlache (-88.50). Highest resolution we can get.
 fetch "ldem_875s_10m_jp2.lbl"
 fetch "ldem_875s_10m.jp2"
 
-# 85S-90S at 20 m/px, 79 MB. Needed for the other four catalogue sites
-# (Haworth, Nobile, Malapert, Cabeus are all at 84.9-86.9 S, outside the
-# 87.5S tile). Uncomment when those sites are in scope.
-# fetch "ldem_85s_20m_jp2.lbl"
-# fetch "ldem_85s_20m.jp2"
+# 85S-90S at 20 m/px, 79 MB. Covers Haworth (-86.90) and Nobile (-85.28).
+fetch "ldem_85s_20m_jp2.lbl"
+fetch "ldem_85s_20m.jp2"
+
+# 80S-90S at 20 m/px, 255 MB. Covers Malapert and Cabeus (both -84.90),
+# which sit 0.1 deg outside the 85S tile's edge. Large, but it is the only
+# way to reach those two at better than 120 m/px.
+fetch "ldem_80s_20m_jp2.lbl"
+fetch "ldem_80s_20m.jp2"
 
 echo
 echo "Done. Verify with:"

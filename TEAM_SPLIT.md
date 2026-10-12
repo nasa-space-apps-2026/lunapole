@@ -25,19 +25,29 @@
 
 **Owns:** everything downloaded; `data/` directory; crop outputs.
 
-**First task, before anything else — this gates the whole project:**
-1. Find exact LOLA tile URLs for the south pole. The spec's assumed single-file `LDEM_75S` doesn't exist; products are tiled via PDS/Astrogeology.
-2. Download `de440s.bsp` (32.7 MB, verified live) — **not** the 114 MB `de440.bsp`.
-3. Download `moon_pa_de440_200625.bpc` (12.3 MB).
-4. Clear disk first — you're at 97% full with 8.2 GB free.
+**DONE — data acquired and verified.** `bash scripts/fetch_dem.sh && bash scripts/fetch_data.sh`
 
-**Then:** crop a DEM per site from `sites.json`. Decision to make and document: **118 m/px LOLA** (honest, contiguous) or **LROC NAC stereo** (better, patchy). Recommend starting with 118 m/px and upgrading if time allows.
+| Tile | Coverage | Res | Size |
+|---|---|---|---|
+| `ldem_875s_10m.jp2` | 87.5S-90S | **10 m/px** | 62 MB |
+| `ldem_85s_20m.jp2` | 85S-90S | 20 m/px | 76 MB |
+| `ldem_80s_20m.jp2` | 80S-90S | 20 m/px | 255 MB |
+
+Plus 4 SPICE kernels (44 MB). All 6 catalogue sites resolve against terrain —
+verify with `python3 verify/verify_dem.py`.
+
+**Remaining:** crop per-site windows from the tiles for `artifacts/dem/`. Use
+windowed reads (`ReadAsArray(x0,y0,w,h)`), not full-array loads — full reads
+take 10+ minutes.
 
 **Deliverable:** `artifacts/dem/<site_id>.tif` + a `data/SOURCES.md` with every URL and SHA-256.
 
 **Test:** open a cropped DEM, confirm elevations are plausible (south pole range roughly −8,000 m to +4,000 m), and confirm the crop is centred on the right coordinates.
 
-**Watch for:** the LOLA decode trap. `height_m = pixel_value * scale + offset`. Get this wrong and everything is off by millions of metres. Write the test first.
+**Watch for:** `ldec_` vs `ldem_`. The LOLA polar products differ by two
+characters: `ldem_` is elevation in metres, `ldec_` is observation COUNT per
+pixel (0..13). A `ldec_` file opens cleanly with correct geometry and is
+completely wrong terrain. `verify_dem.py` rejects it — don't bypass that check.
 
 ---
 
