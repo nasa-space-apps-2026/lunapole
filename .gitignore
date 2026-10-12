@@ -21,6 +21,11 @@ id_rsa*
 data/raw/
 data/**/*.tif
 data/**/*.img
+# PDS/LOLA rasters ship as IMG and JPEG 2000; the .jp2s are 34-185 MB each
+data/dem/
+data/**/*.jp2
+data/**/*.lbl
+data/**/*.xml
 artifacts/dem/
 *.h5
 *.nc
