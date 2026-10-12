@@ -32,8 +32,24 @@ fetch "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp
 fetch "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/moon_pa_de440_200625.bpc" \
       "$DATA_DIR/moon_pa_de440_200625.bpc"
 
+# --- two more kernels SPICE needs before anything works ---
+# Verified the hard way: without each of these you get a confusing error.
+
+# Leapseconds. Without it: SpiceNOLEAPSECONDS on the first str2et().
+fetch "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0012.tls" \
+      "$DATA_DIR/naif0012.tls"
+
+# Body radii. Without it: SpiceKERNELVARNOTFOUND, "variable BODY10_RADII
+# could not be found". This is what makes subpt() work. There is no
+# naif0013.tls -- do not go looking for one.
+fetch "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00010.tpc" \
+      "$DATA_DIR/pck00010.tpc"
+
 echo
 echo "Done. Verify with:"
 echo "  sha256sum $DATA_DIR/*"
+echo
+echo "Sanity-check the whole chain:"
+echo "  python3 verify/verify_ephemeris.py"
 echo
 echo "NOTE: DEM tiles still unresolved. See TEAM_SPLIT.md (P1)."

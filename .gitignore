@@ -12,6 +12,10 @@ id_rsa*
 *.bpc
 *.tls
 *.tsc
+# SPICE text kernels — pck00010.tpc is 124 KB, not worth versioning;
+# fetch_data.sh pulls it alongside the rest.
+*.tpc
+*.pck
 
 # --- DEM rasters: multi-GB, re-croppable from source ---
 data/raw/
