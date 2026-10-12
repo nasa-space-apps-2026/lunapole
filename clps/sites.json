@@ -1,0 +1,110 @@
+{
+  "_meta": {
+    "title": "LUNAPOLE verified site catalogue",
+    "status": "VERIFIED 2026-10-12 — coordinates cross-checked against IAU Gazetteer feature IDs cited in Wikipedia infoboxes",
+    "warning": "A 'coord_source' of 'iau_via_wikipedia' means the number came from the IAU Gazetteer feature page cited in the article infobox. Re-confirm against planetarynames.wr.usgs.gov before anything is published or used for a real mission claim.",
+    "lon_convention": "planetographic, -180..+180. East positive. Add 360 for 0..360 E.",
+    "lat_convention": "selenographic, negative = southern hemisphere"
+  },
+
+  "sites": [
+    {
+      "id": "shackleton",
+      "name": "Shackleton",
+      "type": "crater",
+      "lat": -89.6700,
+      "lon": 129.7800,
+      "iau_id": "5450",
+      "dist_from_south_pole_deg": 0.33,
+      "coord_source": "iau_via_wikipedia",
+      "interest": "Closest named feature to the pole. Rim peaks see near-continuous sun; interior is a permanent shadow cold trap. THE reference site for any south-pole illumination demo.",
+      "priority": "P1"
+    },
+    {
+      "id": "de_gerlache",
+      "name": "de Gerlache",
+      "type": "crater",
+      "lat": -88.5000,
+      "lon": -87.1000,
+      "iau_id": "1439",
+      "dist_from_south_pole_deg": 1.50,
+      "coord_source": "iau_via_wikipedia",
+      "interest": "Artemis III candidate region 'de Gerlache Rim 1/2' sits on this crater's rim. 1.5 deg from pole = extreme low sun, heavy topographic shadowing.",
+      "priority": "P1"
+    },
+    {
+      "id": "haworth",
+      "name": "Haworth",
+      "type": "crater",
+      "lat": -86.9000,
+      "lon": -4.0000,
+      "iau_id": "14502",
+      "dist_from_south_pole_deg": 3.10,
+      "coord_source": "iau_via_wikipedia",
+      "interest": "One of the 9 current Artemis III candidate regions. Rim is a candidate landing area.",
+      "priority": "P1"
+    },
+    {
+      "id": "nobile",
+      "name": "Nobile",
+      "type": "crater",
+      "lat": -85.2800,
+      "lon": 53.2700,
+      "iau_id": "4321",
+      "dist_from_south_pole_deg": 4.72,
+      "coord_source": "iau_via_wikipedia",
+      "interest": "Artemis III regions 'Nobile Rim 1/2'. NOTE: these are descriptors on the crater rim, NOT gazetteer features. Use crater centre as an anchor only.",
+      "priority": "P2"
+    },
+    {
+      "id": "malapert",
+      "name": "Malapert",
+      "type": "crater",
+      "lat": -84.9000,
+      "lon": 12.9000,
+      "iau_id": "3603",
+      "dist_from_south_pole_deg": 5.10,
+      "coord_source": "iau_via_wikipedia",
+      "interest": "Artemis III region 'Malapert Massif'. IM-1 (Odysseus) landed near Malapert A at 80.13S 1.44E — see clps_missions.json.",
+      "priority": "P2"
+    },
+    {
+      "id": "cabeus",
+      "name": "Cabeus",
+      "type": "crater",
+      "lat": -84.9000,
+      "lon": -35.5000,
+      "iau_id": "953",
+      "dist_from_south_pole_deg": 5.10,
+      "coord_source": "iau_via_wikipedia",
+      "interest": "Large shadowed crater, candidate for volatiles. Artifacts of distant-sun lighting make it a good demo contrast vs Shackleton.",
+      "priority": "P2"
+    }
+  ],
+
+  "rejected_from_original_spec": {
+    "_why": "These appeared in the original README site table with unverified / invented coordinates. Do NOT use them without first resolving against the IAU Gazetteer.",
+    "Connecting Ridge": "No gazetteer feature by this name. Artemis III region descriptor, not an IAU name.",
+    "Leibnitz-Beta plateau": "No such feature. Leibnitz crater is at -38.17, 179.54 — nowhere near the pole. Original spec coords appear fabricated.",
+    "Malapert Massif": "Not an IAU name. Artemis descriptor for the Malapert massif area. Use Malapert crater anchor.",
+    "Mount Mouton": "Wrong type. The IAU feature is Mons Mouton (approved 2022, IAU 16070) — a mons, not a mountain.",
+    "Nobile Rim 1/2": "Not gazetteer features. Descriptors on the Nobile crater rim.",
+    "de Gerlache-Kocher Massif": "Informal composite. Use de Gerlache crater (IAU 1439).",
+    "Slater Plain": "Artemis III region descriptor, no gazetteer entry found.",
+    "Peak near Cabeus B": "Artemis III region descriptor, no gazetteer entry found."
+  },
+
+  "artemis_iii_regions_current_9": {
+    "_source": "NASA news release 28 Oct 2024, 'NASA Provides Update on Artemis III Moon Landing Regions'",
+    "_note": "NASA published NAMES only, no coordinates. Regions are ~15x15 km boxes. Region -> crater-centre anchor is our approximation, NOT an official mapping.",
+    "Peak near Cabeus B":   {"anchor": "cabeus"},
+    "Haworth":              {"anchor": "haworth"},
+    "Malapert Massif":      {"anchor": "malapert"},
+    "Mons Mouton Plateau":  {"anchor": null, "note": "Mons Mouton IAU 16070 coords unresolved — verify"},
+    "Mons Mouton":          {"anchor": null, "note": "same"},
+    "Nobile Rim 1":         {"anchor": "nobile"},
+    "Nobile Rim 2":         {"anchor": "nobile"},
+    "de Gerlache Rim 2":    {"anchor": "de_gerlache"},
+    "Slater Plain":         {"anchor": null, "note": "no gazetteer entry"}
+  }
+}

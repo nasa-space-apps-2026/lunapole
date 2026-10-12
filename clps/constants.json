@@ -1,0 +1,154 @@
+{
+  "_meta": {
+    "title": "LUNAPOLE physical constants — VERIFIED",
+    "verified_on": "2026-10-12",
+    "rule": "Anything not in this file is unverified. Do not hardcode a number that isn't here."
+  },
+
+  "lunar": {
+    "radius_m": 1737400.0,
+    "equatorial_radius_m": 1737400.0,
+    "polar_radius_m": 1737200.0,
+    "_radius_note": "spec used 1737400 for both. Real flattening is ~0.0012. Negligible for our tolerance; noted for honesty."
+  },
+
+  "solar": {
+    "max_elevation_at_pole_deg": 1.5424,
+    "apparent_diameter_deg": 0.5334,
+    "obliquity_deg": 1.5424,
+    "_verified": "Max sun elevation at pole = lunar obliquity. Sun diameter 0.5334 (range 0.5246-0.5425)."
+  },
+
+  "earth": {
+    "equatorial_radius_m": 6378137.0,
+    "apparent_diameter_from_moon_deg": 1.901,
+    "_verified": "1.901 mean, range 1.802-2.012. Ratio to Sun = 3.56x."
+  },
+
+  "libration": {
+    "longitude_deg": 7.9,
+    "latitude_deg": 6.68,
+    "_verified": true
+  },
+
+  "cycles": {
+    "draconic_years": 18.6,
+    "draconic_days": 6793.5,
+    "_verified": true
+  },
+
+  "parallax": {
+    "max_sub_lunar_parallax_deg": 0.2590,
+    "_verified": true
+  },
+
+  "derived": {
+    "shadow_length_multiplier_at_max_elev": 37.20,
+    "shadow_formula": "L = h / tan(elevation_deg); at 1.5424 deg -> L = 37.20 * h",
+    "horizon_distance_formula": "d = sqrt(2 * R * h)",
+    "curvature_formula": "h_sphere = R * (1 - cos(theta / R))  [theta in metres]"
+  },
+
+  "CORRECTED_curvature_table": {
+    "_warning": "The original spec's curvature numbers were WRONG by ~6x. These are verified values. The original claimed 42.2m at 30km and 469m at 100km.",
+    "values": [
+      {"dist_km": 5,    "h_sphere_m": 7.19},
+      {"dist_km": 10,   "h_sphere_m": 28.77},
+      {"dist_km": 12.1, "h_sphere_m": 42.20, "_note": "the original spec's '42.2 m at 30 km' is actually the 12.1 km value"},
+      {"dist_km": 30,   "h_sphere_m": 259.0},
+      {"dist_km": 50,   "h_sphere_m": 719.6},
+      {"dist_km": 100,  "h_sphere_m": 2877.1}
+    ],
+    "_impact": "Far-field curvature correction is ~6x stronger than the spec assumed. Ridge shadows reach much further than believed. This STRENGTHENS the case that far-field is mandatory, but all horizon numbers must be recomputed."
+  },
+
+  "horizon_distance_table": [
+    {"h_m": 5,   "horizon_km": 4.17},
+    {"h_m": 100, "horizon_km": 18.64},
+    {"h_m": 500, "horizon_km": 41.68}
+  ],
+
+  "earth_elevation_verified": {
+    "_note": "Verified by direct computation of cos(theta)=sin(p)s sin(p)e + cos(p)s cos(p)e cos(dlon); elev = 90 - theta",
+    "formula": "cos(theta) = sin(lat_site)sin(lat_subearth) + cos(lat_site)cos(lat_subearth)cos(lon_site - lon_subearth)",
+    "values": [
+      {"site_lat": -85, "sub_earth_lat": 0,     "elev_deg": 5.00},
+      {"site_lat": -85, "sub_earth_lat": -6.7,  "elev_deg": 11.70},
+      {"site_lat": -85, "sub_earth_lat": 6.7,   "elev_deg": -1.70},
+      {"site_lat": -90, "sub_earth_lat": 0,     "elev_deg": 0.00}
+    ]
+  },
+
+  "citation_verified": {
+    "mazarico_2011": {
+      "status": "CORRECT — the spec's hedge can be removed",
+      "authors": "Mazarico, E., Neumann, G.A., Smith, D.E., Zuber, M.T., Torrence, M.H.",
+      "title": "Illumination Conditions of the Lunar Polar Regions Using LOLA Topography",
+      "journal": "Icarus",
+      "volume": "209(2)",
+      "pages": "634-641",
+      "year": 2011,
+      "doi": "10.1016/j.icarus.2010.08.015",
+      "nasa_ntrs": "20120010094",
+      "_what_it_actually_does": "Precomputes horizon elevation per azimuthal direction at 0.5 deg resolution from 240 m/px DEMs. For each surface point compares sun elevation to horizon profile per direction. If sun elevation < horizon elevation in ALL directions the point is in permanent shadow. THIS IS EXACTLY the max-per-azimuthal-bin method the spec proposes.",
+      "_bonus_fact": "Found Shackleton crater rim has ~240 days/year of continuous sunlight. Useful cross-check target."
+    }
+  },
+
+  "stack_reality": {
+    "spiceypy": {"license": "MIT", "ok": true, "note": "reads de440s.bsp and PCK files"},
+    "three.js": {"version": "0.186.1", "license": "MIT", "ok": true},
+    "gdal_python": {"osgeo": "3.11.5", "ok": true},
+    "numpy": {"version": "2.3.5", "requires_python": ">=3.12", "ok": true},
+    "scipy": {"ok": true},
+    "astronomy-engine": {
+      "status": "DOES NOT WORK FOR THIS PROJECT",
+      "actual_bundle_mb": 1.8,
+      "spec_claimed_kb": 116,
+      "reason": "No lunar-surface observer API. Observer/VectorObserver functions are Earth-surface only. Cannot compute Sun/Earth elevation from a point on the Moon.",
+      "usable_for": "general astronomy display only, NOT for our observer"
+    }
+  },
+
+  "data_sources_verified": {
+    "_verified_on": "2026-10-12",
+    "de440s_bsp": {
+      "url": "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp",
+      "bytes": 32726016,
+      "license": "public domain (NAIF/JPL)",
+      "account": false,
+      "status": "CONFIRMED 200 OK by direct download",
+      "_note": "Use this, NOT de440.bsp (114 MB). Same Moon/Sun/Earth accuracy for our horizon work. Saves 82 MB."
+    },
+    "de440_bsp": {
+      "url": "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp",
+      "bytes": 119799808,
+      "account": false,
+      "_note": "Fallback if de440s proves insufficient."
+    },
+    "moon_pa_bpc": {
+      "url": "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/moon_pa_de440_200625.bpc",
+      "bytes": 12863488,
+      "license": "public domain",
+      "account": false,
+      "_note": "CORRECTION: spec claimed ~1 MB. Actual 12.3 MB. Lunar orientation + libration kernel."
+    },
+    "ldem_75s": {
+      "status": "NEEDS RESOLUTION — see note",
+      "_note": "Spec assumed a single ~1 GB file at 118 m/px. LOLA gridded products are distributed as TILES via PDS/Astrogeology, not one file. LDEM_87S as described in the spec DOES NOT EXIST as a standard product. PERSON 1 MUST resolve the exact tile URLs before any build starts. This is the single biggest schedule risk.",
+      "native_resolution_m": 118,
+      "_spec_error": "25 m/px is NOT achievable from LOLA alone. That would need LROC NAC stereo DEMs (~1-2 m/px) which have limited, non-contiguous coverage. Decide: 118 m/px LOLA (honest, limited) or LROC NAC where available (better, patchy)."
+    },
+    "lroc": {
+      "url": "https://wms.lroc.asu.edu/",
+      "account": false,
+      "license": "public domain (NASA/ASU)"
+    },
+    "gazetteer_api": {
+      "url": "https://planetarynames.wr.usgs.gov/",
+      "status": "NO WORKING REST ENDPOINT — verified 404/HTML on multiple paths",
+      "_note": "Coordinates in sites.json came from Wikipedia infoboxes that cite IAU feature IDs. Always re-confirm at planetarynames.wr.usgs.gov by hand before publishing."
+    },
+    "licenses": "ALL sources are US public domain. No AGPL, no EULA, no registration. Attribution appreciated, not required."
+  }
+}
