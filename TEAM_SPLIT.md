@@ -36,9 +36,11 @@
 Plus 4 SPICE kernels (44 MB). All 6 catalogue sites resolve against terrain —
 verify with `python3 verify/verify_dem.py`.
 
-**Remaining:** crop per-site windows from the tiles for `artifacts/dem/`. Use
-windowed reads (`ReadAsArray(x0,y0,w,h)`), not full-array loads — full reads
-take 10+ minutes.
+**DONE — per-site crops.** `python3 scripts/crop_sites.py` produces
+`artifacts/dem/<site_id>.tif` for all 6 sites (25 km radius, GeoTIFF, deflate).
+`python3 scripts/verify_crops.py` — all checks pass (elevation plausible,
+terrain varies, crop centred, tags match). Checksums + URLs in
+`data/SOURCES.md`.
 
 **Deliverable:** `artifacts/dem/<site_id>.tif` + a `data/SOURCES.md` with every URL and SHA-256.
 
@@ -66,6 +68,19 @@ completely wrong terrain. `verify_dem.py` rejects it — don't bypass that check
 **Test (non-negotiable):** compare computed subsolar point against JPL Horizons at ≥5 epochs, including two at libration extrema. Target error **< 0.01°**. This is the single most important test in the project — it's the thing that proves the physics is real.
 
 **Bonus:** Mazarico 2011 found Shackleton rim gets ~240 days/year continuous sun. If our engine agrees, we have strong independent validation.
+
+**Status: DONE (2026-10-13).** `build/lunapole/frames.py` + `build/lunapole/ephemeris.py`
+built with SpiceyPy 8.3.0 against the four kernels. The non-negotiable gate passes:
+`verify/verify_horizons.py` compares sub-solar and sub-Earth points against JPL
+Horizons (`QUANTITIES='14,15'`, geocentric observer) at 5 epochs incl. 2 libration
+extrema — **worst separation 0.0076° (sub-solar) / 0.0070° (sub-Earth), target <0.01°**.
+`verify/verify_ephemeris.py` (local sanity) passes 12/12. Bake of the 3 P1 sites for
+one synodic month @ 5-min steps (8 505 samples/site, 0.27 MB each) is deterministic
+and struct round-trips against `frames.py`. Three real bugs were found and fixed on
+the way — argument-order in `subpt()` (was computing the sub-LUNAR point on the
+Sun), a sign error in every elevation computation (`acos−90` vs `90−acos`), and
+monthly-sampling aliasing against the 29.53-d synodic sweep. Read
+`docs/spice-gotchas.md` before touching any of this.
 
 ---
 
