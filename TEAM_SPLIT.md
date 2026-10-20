@@ -86,7 +86,7 @@ monthly-sampling aliasing against the 29.53-d synodic sweep. Read
 
 ## P3 — Horizon engine
 
-**Owns:** `build/lunapole/horizon.py`, `solar_disc.py`, `earth.py`
+**Owns:** `build/lunapole/dem.py`, `horizon.py`, `solar_disc.py`, `earth.py`
 
 **This is the technical heart.** Far-field horizon via max-per-azimuthal-bin, following Mazarico et al. 2011 (Icarus 209(2):634–641, doi:10.1016/j.icarus.2010.08.015 — citation verified correct).
 
@@ -104,6 +104,47 @@ monthly-sampling aliasing against the 29.53-d synodic sweep. Read
 - Curvature at 30 km = 259 m
 - Shadow length at 1.5424° = 37.20 × h
 - **Far-field must never lower the horizon** vs near-field (more terrain can only occlude more). If this test fails you have a sign error.
+
+**Status: DONE (2026-10-21).** `build/lunapole/dem.py` (terrain access),
+`horizon.py` (max-per-bin march), `solar_disc.py` (equal-solid-angle
+penumbra), `earth.py` (topocentric parallax + disc). Gate:
+`verify/verify_horizon.py` passes **all** checks on synthetic terrain *and*
+on the real crops — run it in ~7 s for four sites.
+
+What the gate actually measured:
+
+| Claim | Measured |
+|---|---|
+| Curvature at 30 / 100 km | **259.00 / 2887.07 m** (42.2 m is the 12.1 km value) |
+| Shadow at 1.5424° | **37.138 × h** — constants.json's 37.20 is the 1.5400° rounding |
+| Flat sphere horizon | local tangent (0.000°), dip −0.1649° at 10 km |
+| Far-field vs near-field | **never negative** (worst Δ = 0.000e+00); gains up to **+20.8°** of horizon (Malapert), +13.6° at Shackleton |
+| Determinism | two bakes byte-identical; artifact round-trips |
+| Solar disc | centre on a flat horizon → **50.0 %** of the disc; 17.3 % of the whole polar range |
+| Earth | parallax **−0.2520°** at Shackleton (limit 0.2590°), disc 1.8599° |
+
+Per-site horizons (25 km crop, 720 bins, all 6 sites, ~6 s for the bake):
+
+```
+site           elevation range      median   far-field bins
+shackleton     -8.71 .. +41.96 deg  +26.54   720/720
+de_gerlache   +10.04 .. +45.06 deg  +15.78   720/720
+haworth        -0.33 .. +14.17 deg   +8.24   710/720
+nobile         +0.84 ..  +8.56 deg   +3.83   686/720
+malapert       +3.14 .. +22.21 deg  +10.12   676/720
+cabeus         +1.90 .. +33.11 deg  +11.35   676/720
+```
+
+A 40°+ horizon means the site is inside a crater looking at its own wall;
+that is the measured DEM, not a bug. The `far-field bins N/720` counters are
+the honesty requirement in action: a ray that leaves the 25 km crop stops
+there and says so (`FLAG_EDGE`), it does not invent terrain.
+
+**Scope note (honest limitation):** the crops are 25 km radius, so the
+artifact never reaches the spec's 100 km. `max_dist_km` is recorded in the
+header and the per-bin flags carry the coverage. Re-crop at
+`--radius-km 100` when disk allows; the engine needs no change. See
+`docs/horizon-notes.md` for the method, the format, and the traps.
 
 ---
 

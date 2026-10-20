@@ -18,6 +18,7 @@ Do not copy numbers or coordinates from it.
 | `clps/constants.json` | **The only source of truth for physical constants** |
 | `clps/sites.json` | **The only source of truth for coordinates** (IAU-verified) |
 | `TEAM_SPLIT.md` | Roles, dependencies, nightly gates, stop rule |
+| `docs/horizon-notes.md` | Horizon engine: method, artifact format, coverage limits |
 | `README-SOUTHPOLE.md` | Original spec — design intent only. Numbers untrusted. |
 
 ### Known errors in the original spec
@@ -37,9 +38,9 @@ Pre-build. Verification complete; implementation not started.
 - [x] Physical constants verified
 - [x] Site coordinates verified against IAU Gazetteer
 - [x] Data sources confirmed available
-- [ ] DEM acquisition
+- [x] DEM acquisition
 - [ ] Ephemeris bake
-- [ ] Horizon engine
+- [x] Horizon engine
 - [ ] Map products
 - [ ] Application
 
