@@ -163,6 +163,18 @@ header and the per-bin flags carry the coverage. Re-crop at
 
 **Test:** spot-check a few known PSRs against Mazarico's published map.
 
+**Status: DONE (2026-10-22).** `build/lunapole/maps.py` bakes all three
+products: a labelled 1-year illumination/PSR map (462² @320 m, 120 az
+bins — 18.2 % permanent shadow, honest `span_label` in every header),
+the Earth-visibility map (47.9 % of the polecap sees a limb, 41.2 % the
+full disc), and per-site time series + full-cycle (18.6-yr) point runs
+for the four sites. The full-cycle **map bake** variant is implemented
+but not baked (expensive); per-site full-cycle runs cover the verdict
+engine. Verifier: `verify/verify_maps.py` — synthetic 20/20, P3
+bin-for-bin march parity, Earth closed-form parity 1.8e-15°, published
+cross-checks (Shackleton interior dark / rim ~80-90 %/yr) pass. See
+`docs/maps-notes.md`.
+
 ---
 
 ## P5 — App / frontend

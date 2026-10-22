@@ -33,15 +33,15 @@ Do not copy numbers or coordinates from it.
 
 ## Status
 
-Pre-build. Verification complete; implementation not started.
+Pre-build. Verification complete; implementation in progress.
 
 - [x] Physical constants verified
 - [x] Site coordinates verified against IAU Gazetteer
 - [x] Data sources confirmed available
 - [x] DEM acquisition
-- [ ] Ephemeris bake
+- [x] Ephemeris bake
 - [x] Horizon engine
-- [ ] Map products
+- [x] Map products (1-yr labelled bake + full-cycle point runs; see `docs/maps-notes.md`)
 - [ ] Application
 
 ---
