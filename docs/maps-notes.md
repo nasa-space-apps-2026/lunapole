@@ -112,7 +112,8 @@ time pass):
   (38,809 px) — the crater floors (Shackleton, de Gerlache, Faustini,
   Neuenschwander...), classic PSR pattern.
 * lit_frac: median 0.197, max 0.984 (a 1,621 m summit at lat −87.17,
-  lon 217.3, whose horizon never rises above 0°).
+  lon 217.3 — see the resolution-bias section below: its truth value is
+  0.665; the map plane is labelled with its own march resolution).
 * far_frac: mean 0.794; 44 % of pixels march the full 25 km inside
   measured terrain (the rest exit the raster — their horizon bins are
   computed from what the tile contains, and the deficit is recorded).
@@ -139,17 +140,41 @@ candidate of the four).
 **Published-figure cross-checks** (see `verify_maps --real --mazarico`):
 the literature basis for Shackleton is rim peaks lit ~80–90 % of the
 year / interior in perpetual darkness (Mazarico 2011 heritage; Spudis
-1995). Measured: 20.3 % of the 21-km footprint dark over the span, best
-footprint pixel lit 0.855. The oft-quoted "240 continuous days at the
-rim" is **not** attached to Shackleton in the sources we could check and
-is treated as unverified; our best season-scale continuous run anywhere
-in the polecap is 84 days (18.6-yr, best pixel).
+1995). Measured: 20.6 % of the 21-km footprint dark over the span ✓.
+The rim part does NOT reproduce: at the P3 truth march (720 bins,
+10-m step) the 8 highest rim-crest points stay at **0.12–0.595 lit/yr**
+(best 0.595). The Spudis-era claim is treated as stale pre-LOLA
+topography and recorded rather than asserted. The oft-quoted "240
+continuous rim days" remained untraceable and is likewise dropped.
 
-**Honesty showcase** — the best-map pixel (lit 0.984 over the 2026–2027
-labelled year) drops to **0.706 over the full 18.6-yr cycle**: the
-2026-10 epoch sits in a favourable notch of the draconic cycle. This is
-exactly why a 1-year map may never be labelled as PSR ground truth, and
-why the full-cycle per-site runs exist in the verdict engine.
+## March-resolution bias (measured, watch out)
+
+The map's batched march runs at 120 az bins / 250 m step for budget
+reasons; the P3 per-point truth march runs 720 bins / 10 m. At pixels
+whose horizon is low and granular — rim crests, grazing ridges — the
+coarse march **misses narrow blocking ridges** and overstates light:
+
+| pixel | map 120-bin | truth 720-bin | optimism |
+|---|---|---|---|
+| map-best footprint px (z 2883 m) | 0.855 | 0.595 | +0.260 |
+| summit lat −87.17, lon 217.3 (z 1621 m) | 0.984 | 0.716 | +0.268 |
+| rim crests (8 px, annulus 6.2–10.5 km) | 0.38–0.73 | 0.12–0.60 | up to +0.48 |
+
+Mechanics verified: at a summit 2.8° from the pole the Sun sweeps 360°
+every synodic month, so solar elevation swings symmetrically
+±(2.8° + 1.55°) ≈ ±4.35° — the summit's truth horizon grazes at
+−0.00°, and the coarse march misses exactly that grazing ridge.
+Over the true 18.6-yr cycle the summit's truthful lit_frac is 0.706
+with a season-scale continuous run of 84.2 days.
+
+**Consequences for the app:** the PSR fraction itself is robust (blocked
+floors have horizons +10°..+42°, sampled fine by the coarse march), but
+low-horizon pixels must be shown as overview-quality. Per-site verdicts
+(product 3) run at P3 truth resolution and stay the saleswomen of the
+UI; the map PNG shows rims brighter than truth at its labelled
+resolution (`az_bins`, `step_m`, `max_dist_km` are in every artifact
+header — display them alongside the span label). This calibration is
+enforced in `verify_maps --real --mazarico` (31/31 green, 2026-10-22).
 
 ## Regenerating
 

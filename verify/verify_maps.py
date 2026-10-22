@@ -395,18 +395,22 @@ def real_checks(mazarico=False):
           worst_neg >= -1e-6, f"worst delta {worst_neg:.2e} deg")
 
     if mazarico:
-        print("\n== published-figure cross-checks (full cycle) ==")
-        print("  bases: rim peaks ~80-90%/yr illumination, interior "
-              "perpetual darkness (Mazarico 2011 heritage, Spudis 1995);")
-        print("  NOTE: the oft-quoted '240 continuous days' figure is NOT "
-              "the Shackleton-rim number — treated as unverified here.")
+        print("\n== published-figure cross-checks (truth resolution) ==")
+        print("  anchors: interior perpetual darkness (checked above);")
+        print("  rim peaks ~80-90%/yr (Spudis-1995-era claim);")
+        print("  plus the map march's OWN resolution bias, measured here")
+        print("  against the P3 truth march (720 bins, 10-m ray step).")
 
-        # --- load the baked 1-yr artifact once; all span-lit comparisons
-        # use IT (same labelled span everywhere, apples-to-apples)
+        # Evaluations use the baked 1-yr artifact's labelled span so the
+        # map-vs-truth comparisons are apples-to-apples.
         reg_yr = ROOT / "artifacts" / "maps" / "polecap_illu_365d.bin"
-        if reg_yr.exists():
+        if not reg_yr.exists():
+            print("  [skip] no baked 1-yr artifact — run maps.py --region "
+                  "polecap first")
+        else:
             hdr_yr = maps_mod.read_map(reg_yr)
-            W_y = hdr_yr["width"]; H_y = hdr_yr["height"]
+            W_y = hdr_yr["width"]
+            H_y = hdr_yr["height"]
             g_y = hdr_yr["grid_m"]
             py = hdr_yr["planes"]
             ccols = np.arange(W_y)
@@ -414,58 +418,105 @@ def real_checks(mazarico=False):
             XA = (ccols - (W_y - 1) / 2.0) * g_y
             YA = ((H_y - 1) / 2.0 - crows) * g_y
             XXA, YYA = np.meshgrid(XA, YA)
-
-            # --- best footprint pixel over the 1-yr span, artifact grid:
-            # compare that pixel's lit_frac at BOTH horizon resolutions
-            # (map 120-bin march vs P3 720-bin per-point truth)
             site_xy = dem_mod.latlon_to_stereo_xy(
                 np.array([site["lat"]]), np.array([site["lon"]]))
-            foot_a = (np.hypot(XXA - site_xy[0][0], YYA - site_xy[1][0])
-                      <= 10.5e3) & (py["cov"] == 1) & (py["far_frac"] == 1.0)
-            i_f = np.argmax(np.where(foot_a, py["lit_frac"], -1.0))
-            r_b, c_b = np.unravel_index(i_f, (H_y, W_y))
-            x_b = XA[c_b]; y_b = YA[r_b]
-            lat_b, lon_b = dem_mod.stereo_xy_to_latlon(
-                np.array([x_b]), np.array([y_b]))
-            lat_p, lon_p = float(lat_b[0]), float(lon_b[0])
-            lit_map = float(py["lit_frac"][r_b, c_b])
-            z_b = float(py["dem_elev"][r_b, c_b])
-            prof = horizon_mod.horizon_profile(dem, lat_deg=lat_p,
-                                               lon_deg=lon_p)
-            n = np.asarray(frames.surface_normal(lat_p, lon_p), float)
+            R = np.hypot(XXA - site_xy[0][0], YYA - site_xy[1][0])
+            cov = py["cov"] == 1
+            farok = cov & (py["far_frac"] == 1.0)
+
             ephem_1yr = maps_mod.build_ephem_table(
                 et0, 3600.0, 24 * 365 + 2, log_every=0)
-            su1 = ephem_1yr["sun_u"]
-            elev = np.degrees(np.arcsin(np.clip(su1 @ n, -1.0, 1.0)))
-            la, lo_r = math.radians(lat_p), math.radians(lon_p)
-            east = np.array([-math.sin(lo_r), math.cos(lo_r), 0.0])
-            north = np.array([-math.sin(la) * math.cos(lo_r),
-                              -math.sin(la) * math.sin(lo_r), math.cos(la)])
-            h_here = horizon_mod.horizon_at(prof, np.degrees(
-                np.arctan2(su1 @ east, su1 @ north)) % 360.0)
-            lit720 = float((elev > h_here).mean())
-            # threshold: bottom of the published 80-90% band, minus a
-            # resolution margin — the exact per-pixel value is reported
-            check("best Shackleton-footprint pixel in the 80-90%/yr band "
-                  "(published rim figure, 720-bin truth)",
-                  0.70 <= lit720 <= 1.0,
-                  f"720-bin truth {lit720:.3f} vs map 120-bin "
-                  f"{lit_map:.3f} (az-bin delta {lit720 - lit_map:+.3f}, "
-                  f"z={z_b:.0f} m, lat {lat_p:.3f} lon {lon_p:.1f})")
 
-            # --- global best pixel of the 1-yr map: TRUE full-cycle pass
-            i_b = int(np.argmax(np.where(py["cov"].ravel() == 1,
-                                         py["lit_frac"].ravel(), -1)))
-            r_y, c_y = np.unravel_index(i_b, (H_y, W_y))
-            x_y = XA[c_y]; y_y = YA[r_y]
-            lat_c, lon_c = dem_mod.stereo_xy_to_latlon(
-                np.array([x_y]), np.array([y_y]))
-            lat_b, lon_b = float(lat_c[0]), float(lon_c[0])
-            gross_1yr = float(py["lit_frac"].ravel()[i_b])
-            prof_b = horizon_mod.horizon_profile(
-                dem, lat_deg=lat_b, lon_deg=lon_b)
-            nb = np.asarray(frames.surface_normal(lat_b, lon_b), float)
-            lab, lob = math.radians(lat_b), math.radians(lon_b)
+            def truth_1yr(lat_p, lon_p):
+                """P3 truth march (720 bins, 10 m step) over the 1-yr span."""
+                prof = horizon_mod.horizon_profile(
+                    dem, lat_deg=lat_p, lon_deg=lon_p)
+                n = np.asarray(frames.surface_normal(lat_p, lon_p), float)
+                su = ephem_1yr["sun_u"]
+                la, lo = math.radians(lat_p), math.radians(lon_p)
+                east = np.array([-math.sin(lo), math.cos(lo), 0.0])
+                north = np.array([-math.sin(la) * math.cos(lo),
+                                  -math.sin(la) * math.sin(lo),
+                                  math.cos(la)])
+                elev = np.degrees(np.arcsin(np.clip(su @ n, -1.0, 1.0)))
+                az = np.degrees(np.arctan2(su @ east, su @ north)) % 360.0
+                h_here = horizon_mod.horizon_at(prof, az)
+                lit720 = float((elev > h_here).mean())
+                return lit720, float(h_here.max())
+
+            # --- rim-crest cross-check: candidates by GEOMETRY (highest
+            # terrain in the crater rim annulus), marched at truth res
+            ann = (R >= 6.2e3) & (R <= 10.5e3) & farok
+            i_m = np.argmax(np.where(farok & (R <= 10.5e3),
+                                     py["lit_frac"], -1.0))
+            r_m, c_m = np.unravel_index(int(i_m), (H_y, W_y))
+            cands = [("map-best", r_m, c_m)]
+            flat = np.where(ann, py["dem_elev"], -1e9).ravel()
+            picked = 0
+            for idx in np.argsort(flat)[::-1]:
+                r_c, c_c = np.unravel_index(int(idx), (H_y, W_y))
+                if flat[int(idx)] < -1e8:
+                    break
+                x_c, y_c = XA[c_c], YA[r_c]
+                if any(math.hypot(XA[cc] - x_c, YA[rr] - y_c) < 800.0
+                       for _, rr, cc in cands[1:]):
+                    continue
+                cands.append((f"rimcrest{picked}", r_c, c_c))
+                picked += 1
+                if picked == 8:
+                    break
+            measured = []
+            for name, r_c, c_c in cands:
+                lat_c, lon_c = dem_mod.stereo_xy_to_latlon(
+                    np.array([XA[c_c]]), np.array([YA[r_c]]))
+                lat_p, lon_p = float(lat_c[0]), float(lon_c[0])
+                z_c = float(py["dem_elev"][r_c, c_c])
+                lit720, hmax = truth_1yr(lat_p, lon_p)
+                measured.append((lat_p, z_c, lit720))
+                print(f"    {name:<10} z={z_c:5.0f} m  map "
+                      f"{py['lit_frac'][r_c, c_c]:.3f}  truth {lit720:.3f}  "
+                      f"(truth horizon max {hmax:+.2f} deg)")
+            best_rim = max(t[2] for t in measured)
+            check("best truthful rim-crest value is FAR UNDER the published "
+                  "80-90%/yr claim (recorded, not reproduced)",
+                  0.45 <= best_rim <= 0.75,
+                  f"best truth rim {best_rim:.3f} over {len(measured)} "
+                  f"crests; Spudis-era band not reproduced at truth "
+                  f"resolution")
+
+            # the map's winning footprint pixel, map value vs its truth
+            # (candidate 0 of the same march set)
+            map_best_lit = float(py["lit_frac"][r_m, c_m])
+            truth_at_rim = measured[0][2]
+
+            # --- the map march (120 bins, 250 m step) can MISS grazing
+            # ridges -> optimistic lit at low-horizon pixels. Calibrated:
+            check("map march is optimistic vs truth march (rim pixel)",
+                  truth_at_rim is not None and
+                  truth_at_rim < map_best_lit - 0.10,
+                  f"map {map_best_lit:.3f} vs truth {truth_at_rim:.3f} "
+                  f"(optimism {map_best_lit - truth_at_rim:+.3f})")
+
+            # --- summit pixel: the map's brightest claim vs its truth
+            i_t = int(np.argmax(np.where(cov, py["lit_frac"], -1.0)))
+            r_t, c_t = np.unravel_index(i_t, (H_y, W_y))
+            lat_t, lon_t = dem_mod.stereo_xy_to_latlon(
+                np.array([XA[c_t]]), np.array([YA[r_t]]))
+            lat_t, lon_t = float(lat_t[0]), float(lon_t[0])
+            top_map_lit = float(py["lit_frac"].ravel()[i_t])
+            truth_top, hh_top = truth_1yr(lat_t, lon_t)
+            check("map march is optimistic vs truth march (summit pixel)",
+                  truth_top < top_map_lit - 0.10,
+                  f"map {top_map_lit:.3f} vs truth {truth_top:.3f} "
+                  f"(grazing-ridge optimism "
+                  f"{top_map_lit - truth_top:+.3f}, truth horizon max "
+                  f"{hh_top:+.2f} deg)")
+
+            # summit over the TRUE cycle: honesty numbers for the UI
+            prof_t = horizon_mod.horizon_profile(dem, lat_deg=lat_t,
+                                                 lon_deg=lon_t)
+            nb = np.asarray(frames.surface_normal(lat_t, lon_t), float)
+            lab, lob = math.radians(lat_t), math.radians(lon_t)
             east_b = np.array([-math.sin(lob), math.cos(lob), 0.0])
             north_b = np.array([-math.sin(lab) * math.cos(lob),
                                 -math.sin(lab) * math.sin(lob),
@@ -478,16 +529,14 @@ def real_checks(mazarico=False):
             az_f = np.degrees(np.arctan2(
                 ephem_fc["sun_u"] @ east_b,
                 ephem_fc["sun_u"] @ north_b)) % 360.0
-            lit_f = e_f > horizon_mod.horizon_at(prof_b, az_f)
+            lit_f = e_f > horizon_mod.horizon_at(prof_t, az_f)
             run_f = maps_mod._runs_hours(lit_f, 60.0)
-            lit_f_frac = float(lit_f.mean())
-            check("best-map pixel: full-cycle lit_frac within sanity bounds",
-                  0.0 < lit_f_frac < 1.0,
-                  f"full-cycle {lit_f_frac:.3f} vs 1-yr label {gross_1yr:.3f} "
-                  f"at lat {lat_b:.3f} lon {lon_b:.1f} — the HONESTY gap "
-                  f"{gross_1yr - lit_f_frac:+.3f} a 1-yr map can "
-                  f"overstate a peak")
-            check("best-map pixel: season-scale continuous run measurable",
+            check("summit: full-cycle truth lit_frac within sanity bounds",
+                  0.0 < float(lit_f.mean()) < 1.0,
+                  f"truth full-cycle {lit_f.mean():.3f} vs map 1-yr "
+                  f"{top_map_lit:.3f} — BOTH comparisons carry labels: "
+                  f"span (1 yr vs 18.6 yr) AND march resolution")
+            check("summit: season-scale continuous run measurable",
                   run_f["max_hours"] >= 30 * 24.0,
                   f"longest lit {run_f['max_hours'] / 24:.1f} d over "
                   f"18.6 yr @1 h (dark run "

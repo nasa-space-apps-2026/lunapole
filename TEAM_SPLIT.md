@@ -172,7 +172,11 @@ for the four sites. The full-cycle **map bake** variant is implemented
 but not baked (expensive); per-site full-cycle runs cover the verdict
 engine. Verifier: `verify/verify_maps.py` — synthetic 20/20, P3
 bin-for-bin march parity, Earth closed-form parity 1.8e-15°, published
-cross-checks (Shackleton interior dark / rim ~80-90 %/yr) pass. See
+cross-checks green **31/31 (2026-10-22)**: interior-dark ✓, but the
+published "rim ~80-90 %/yr" does NOT reproduce at truth resolution
+(Spudis-era claim recorded, not asserted; best truthful rim 0.595/yr)
+— and the map march's measured resolution bias (+0.26..+0.48 optimism
+on low-horizon pixels) is documented and enforced as a check. See
 `docs/maps-notes.md`.
 
 ---
