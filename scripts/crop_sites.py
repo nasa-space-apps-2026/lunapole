@@ -11,6 +11,20 @@ Usage:
 The default 25 km radius gives a 50 km square crop around each site centre,
 which is enough for far-field horizon work (curvature at 25 km ≈ 180 m).
 """
+
+# --- UTF-8 console -------------------------------------------------------
+# Prints °, +-, x and arrows. A Windows cp1252 console raises
+# UnicodeEncodeError on the first of them, which kills the script after
+# the work is done. Importing the bootstrap fixes the streams once.
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import _bootstrap  # noqa: E402
+
+_bootstrap.utf8_streams()
+# -------------------------------------------------------------------------
+
 import argparse
 import json
 import math

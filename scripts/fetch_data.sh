@@ -2,9 +2,9 @@
 # Fetch LUNAPOLE's public-domain NASA data.
 # Everything here is US public domain: no account, no EULA, no registration.
 #
-# NOTE: LOLA DEM tiles are NOT included. The original spec assumed a single
-# ~1 GB LDEM_75S file; that product is distributed as tiles via PDS/Astrogeology.
-# Resolving the exact tile URLs is P1's first job — see TEAM_SPLIT.md.
+# NOTE: LOLA DEM tiles are NOT downloaded here. They are handled by
+# `scripts/fetch_dem.sh` (three polar tiles, ~393 MB, public domain).
+# Run both scripts before cropping.
 set -euo pipefail
 
 DATA_DIR="${DATA_DIR:-data/kernels}"
@@ -52,4 +52,4 @@ echo
 echo "Sanity-check the whole chain:"
 echo "  python3 verify/verify_ephemeris.py"
 echo
-echo "NOTE: DEM tiles still unresolved. See TEAM_SPLIT.md (P1)."
+echo "NOTE: DEM tiles are fetched separately: bash scripts/fetch_dem.sh"

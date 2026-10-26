@@ -183,12 +183,20 @@ on low-horizon pixels) is documented and enforced as a check. See
 
 ## P5 — App / frontend
 
-**Owns:** `app/` (Vite + TypeScript + Three.js), three panels, timeline, verdict engine
+**Status: DONE (2026-10-25).** `app/index.html` + `app/src/*.js` +
+vendored Three.js, assembled into `app/dist` by `scripts/build_app.py`. Browser
+parsers are cross-checked against the Python readers under Node by
+`verify/verify_app_readers.py`; the phone/rehearsal items remain manual.
 
-**Panels (spec §11):**
-- **A** — polar stereo DEM map, shadows from computed flux
-- **B** — horizon diagram (azimuth × elevation)
-- **C** — first-person sky view
+**Owns:** `app/` (vanilla ES modules + canvas 2D + vendored Three.js; no npm or
+Vite build step by design), four panels, timeline, verdict engine
+
+**Panels as built (§11 and the P6 demo):**
+- **A** - 3D terrain with the far-field horizon ring
+- **B** - baked pole-cap illumination / Earth-visibility map, span label verbatim
+- **C** - first-person sky view
+- **D** - one-click verdict, measured latency
+- **Timeline** - Sun vs measured horizon over the labelled span
 
 **Critical:** the shadow shown on screen and the flux in the numbers must come from the **same source**. If the picture and the table disagree, the app is worse than useless.
 
@@ -201,6 +209,11 @@ on low-horizon pixels) is documented and enforced as a check. See
 ---
 
 ## P6 — Integration, quality, demo
+
+**Status: IN PROGRESS (2026-10-25).** Bake, manifest, artifact pipeline,
+`verify/` and the demo script are in place and measured. The 3-minute rehearsal
+and the airplane-mode phone test are still outstanding (N4), and the manual
+panel attestation keeps N1 BLOCKED.
 
 **Owns:** `build/lunapole/bake.py`, artifact pipeline, `verify/`, README, demo script
 

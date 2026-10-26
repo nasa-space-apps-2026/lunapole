@@ -1,0 +1,11 @@
+{
+  "name": "lunapole-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "LUNAPOLE offline lunar south-pole planner. No build step: scripts/build_app.py copies this tree into dist/.",
+  "type": "module",
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "license": "MIT"
+}

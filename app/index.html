@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LUNAPOLE - lunar south pole planner</title>
+<meta name="description" content="Offline lunar south-pole illumination, Earth-visibility and terrain verdicts from LOLA topography and NAIF ephemerides.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <strong>LUNAPOLE</strong>
+    <span>lunar south pole planner &middot; offline</span>
+  </div>
+  <div class="controls">
+    <label for="siteSelect">Site</label>
+    <select id="siteSelect"></select>
+    <span class="build" id="buildInfo">loading build&hellip;</span>
+  </div>
+</header>
+
+<p class="banner" id="banner" hidden></p>
+
+<main>
+  <section class="panel" id="p-terrain">
+    <h2>Panel A &middot; Terrain and far-field horizon
+      <span class="badge" id="terrainMeta"></span></h2>
+    <div class="canvasWrap tall"><canvas id="terrain3d"></canvas></div>
+    <p class="note" id="terrainNote">
+      Drag to orbit, wheel to zoom. Heights exaggerated 3&times; for legibility;
+      the Sun marker and the shading use the real Sun direction at the selected
+      time. Relief shading only &mdash; no cast shadows are simulated.
+    </p>
+  </section>
+
+  <section class="panel" id="p-map">
+    <h2>Panel B &middot; Baked pole-cap map
+      <span class="spacer"></span>
+      <span class="tabs">
+        <button type="button" class="tab is-on" data-product="ILLU">Sun</button>
+        <button type="button" class="tab" data-product="ERTH">Earth</button>
+      </span>
+    </h2>
+    <div class="canvasWrap"><canvas id="map"></canvas></div>
+    <p class="span-label" id="mapSpanLabel"></p>
+    <p class="note" id="mapNote"></p>
+  </section>
+
+  <section class="panel" id="p-sky">
+    <h2>Panel C &middot; Sky at the site
+      <span class="badge" id="skyMeta"></span></h2>
+    <div class="canvasWrap"><canvas id="pano"></canvas></div>
+    <p class="note" id="skyNote"></p>
+  </section>
+
+  <section class="panel" id="p-verdict">
+    <h2>Panel D &middot; Verdict
+      <span class="spacer"></span>
+      <button type="button" id="verdictBtn" class="primary">Compute verdict</button>
+    </h2>
+    <div id="verdictOut" class="verdict">
+      <p class="placeholder">Press <em>Compute verdict</em>. The engine reads the
+        baked rows for this site; nothing is fetched.</p>
+    </div>
+    <p class="span-label" id="verdictSpanLabel"></p>
+    <p class="note">The verdict is geometry, not a power, thermal or
+      communications link model. Every number carries the span it was measured
+      over.</p>
+  </section>
+
+  <section class="panel full" id="p-time">
+    <h2>Timeline &middot; Sun vs measured horizon, Earth from the site
+      <span class="badge" id="timeMeta"></span></h2>
+    <div class="canvasWrap short"><canvas id="timeline"></canvas></div>
+    <div class="scrubRow">
+      <button type="button" id="playBtn" class="primary">Play</button>
+      <input type="range" id="scrub" min="0" max="1" step="1" value="0"
+             aria-label="time within the labelled span">
+      <span class="readout" id="timeReadout"></span>
+    </div>
+    <p class="note" id="timeNote"></p>
+  </section>
+</main>
+
+<footer>
+  <span>LOLA topography &middot; NAIF DE440s + lunar orientation PCK &middot;
+    every artifact SHA-256 in <code>artifacts/manifest.json</code></span>
+  <span id="footerBuild"></span>
+</footer>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

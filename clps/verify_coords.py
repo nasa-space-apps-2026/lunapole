@@ -4,6 +4,20 @@
 Run:  python3 verify_coords.py
 Emits a markdown table for pasting into sites.json / the spec.
 """
+
+# --- UTF-8 console -------------------------------------------------------
+# Prints °, +-, x and arrows. A Windows cp1252 console raises
+# UnicodeEncodeError on the first of them, which kills the script after
+# the work is done. Importing the bootstrap fixes the streams once.
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import _bootstrap  # noqa: E402
+
+_bootstrap.utf8_streams()
+# -------------------------------------------------------------------------
+
 import json
 import re
 import subprocess

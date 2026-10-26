@@ -19,15 +19,29 @@ Checks, per DEM tile:
 Tiles differ in resolution, so site elevations are only comparable WITHIN
 a tile. 875s is 10 m/px; 85s is 20 m/px. Never mix them in one comparison.
 """
+
+# --- UTF-8 console -------------------------------------------------------
+# Prints °, +-, x and arrows. A Windows cp1252 console raises
+# UnicodeEncodeError on the first of them, which kills the script after
+# the work is done. Importing the bootstrap fixes the streams once.
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+import _bootstrap  # noqa: E402
+
+_bootstrap.utf8_streams()
+# -------------------------------------------------------------------------
+
 import json
 import math
 import sys
 from pathlib import Path
 
 import numpy as np
-from osgeo import gdal
-
-gdal.UseExceptions()
+import rasterio
+from rasterio.enums import Resampling
+from rasterio.windows import Window
 
 ROOT = Path(__file__).resolve().parent.parent
 DEM_DIR = ROOT / "data" / "dem"
@@ -75,53 +89,53 @@ def latlon_to_stereo_xy(lat_deg, lon_deg, radius_m=MOON_R):
 
 
 def open_tile(fname):
-    ds = gdal.Open(str(DEM_DIR / fname))
-    if ds is None:
+    try:
+        src = rasterio.open(DEM_DIR / fname)
+    except (OSError, rasterio.errors.RasterioError):
         return None
-    gt = ds.GetGeoTransform()
-    band = ds.GetRasterBand(1)
+    gt = src.transform
     return {
-        "ds": ds,
-        "gt": gt,
-        "w": ds.RasterXSize,
-        "h": ds.RasterYSize,
-        "pix": abs(gt[1]),
-        "band": band,
-        "dtype": gdal.GetDataTypeName(band.DataType),
+        "src": src,
+        # (x0, pixel_w, 0, y0, 0, pixel_h), the GDAL-style geotransform
+        "gt": (gt.c, gt.a, gt.b, gt.f, gt.d, gt.e),
+        "w": src.width,
+        "h": src.height,
+        "pix": abs(gt.a),
+        "dtype": src.dtypes[0],
     }
 
 
 def tile_stats(t):
-    """Min/max without decompressing 460M JP2 pixels.
+    """Min/max from the coarsest overview, restricted to the data circle.
 
     Two traps here, both found the hard way:
 
-    1. GetOverview(0) is the HIGHEST-resolution overview (2:1), not the
-       coarsest. Pass GetOverviewCount()-1 for the coarsest.
+    1. GDAL's overview index 0 is the HIGHEST-resolution overview (2:1),
+       not the coarsest. Rasterio's decimated read picks the best available
+       level for the requested size; asking for the coarsest factor makes
+       that explicit.
     2. These JP2 tiles are square but their polar-stereographic content is
        circular, so the corners are padding full of sentinel values
        (~ -20928 / +32709). Min/max over the padded raster is meaningless.
        Restrict statistics to the inscribed circle.
     """
-    band = t["band"]
-    n_ov = band.GetOverviewCount()
-    if n_ov > 0:
-        band = band.GetOverview(n_ov - 1)          # coarsest, not [0]
-    w, h = band.XSize, band.YSize
-    if w == 0 or h == 0:                             # no usable overviews
-        band = t["band"]
-        w, h = band.XSize, band.YSize
+    src = t["src"]
+    # Decimate to ~2048 px on the long side. Do not rely on the file having
+    # overviews: the JP2 driver often reports none, and a full-resolution
+    # read of the 875S tile is ~460 M px (~900 MB as int16).
+    factor = max(1, math.ceil(max(t["w"], t["h"]) / 2048))
+    w = max(1, t["w"] // factor)
+    h = max(1, t["h"] // factor)
+    arr = src.read(1, out_shape=(h, w), resampling=Resampling.nearest)
 
     # inscribed circle: excludes the circular padding in the corners
     r = min(w, h) // 2
     cx, cy = w // 2, h // 2
-    x0, x1 = cx - r, cx + r
-    y0, y1 = cy - r, cy + r
-    arr = band.ReadAsArray(x0, y0, x1 - x0, y1 - y0)
+    circle = arr[cy - r:cy + r, cx - r:cx + r]
 
     yy, xx = np.ogrid[-r:r, -r:r]
     inside = (xx * xx + yy * yy) <= r * r
-    vals = arr[inside]
+    vals = circle[inside]
     return float(vals.min()), float(vals.max())
 
 
@@ -129,7 +143,7 @@ def verify_tile(key, fname, cover, mpp):
     print(f"\n{'=' * 62}\ntile {key}: {fname}\n{'=' * 62}")
     t = open_tile(fname)
     if t is None:
-        check(f"{key}: opens with GDAL", False, fname)
+        check(f"{key}: opens with rasterio", False, fname)
         return None
 
     gt, w, h = t["gt"], t["w"], t["h"]
@@ -141,8 +155,8 @@ def verify_tile(key, fname, cover, mpp):
 
     check(f"{key}: filename is ldem_ (elevation), not ldec_ (counts)",
           Path(fname).name.startswith("ldem_"), fname)
-    check(f"{key}: signed integer band", t["dtype"].startswith(("Int16", "Int32")),
-          t["dtype"])
+    check(f"{key}: signed integer band",
+          t["dtype"].lower().startswith(("int16", "int32")), t["dtype"])
     check(f"{key}: pixel size ~{mpp} m", abs(t["pix"] - mpp) < 0.01, f"{t['pix']:.3f} m")
     check(f"{key}: square raster", w == h, f"{w} x {h}")
 
@@ -205,7 +219,7 @@ def site_elev(tile, lat, lon, radius=64):
 
     x0, y0 = max(0, px - radius), max(0, py - radius)
     x1, y1 = min(w, px + radius + 1), min(h, py + radius + 1)
-    win = tile["band"].ReadAsArray(x0, y0, x1 - x0, y1 - y0)
+    win = tile["src"].read(1, window=Window(x0, y0, x1 - x0, y1 - y0))
 
     # pixel offset of the site within the window
     lx, ly = px - x0, py - y0
@@ -282,6 +296,9 @@ def main():
     print(f"\n  {resolved}/{len(sites)} sites resolved against terrain")
     if resolved == 0:
         check("at least one site resolves", False, "no site landed on a raster")
+
+    for t in tiles.values():
+        t["src"].close()
 
     print()
     if failures:

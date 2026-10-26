@@ -1,0 +1,15 @@
+* text=auto
+
+# Shell scripts must stay LF: a CRLF checkout makes WSL/Git-Bash fail with
+# "bash\r: No such file or directory" or "set: pipefail\r: invalid option".
+*.sh text eol=lf
+
+# Binary/public-domain inputs and products: never touch them.
+*.jp2 binary
+*.bsp binary
+*.bpc binary
+*.tif binary
+*.tiff binary
+*.png binary
+*.jpg binary
+*.zip binary

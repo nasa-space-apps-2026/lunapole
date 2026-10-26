@@ -30,10 +30,20 @@ artifacts/dem/
 *.h5
 *.nc
 
-# --- baked artifacts: regenerate with `python build/bake.py`, deterministic ---
+# --- baked artifacts: regenerate with `python build/lunapole/bake.py`, deterministic ---
 artifacts/ephemeris/
 artifacts/horizon/
 artifacts/maps/
+artifacts/manifest.json
+artifacts/.stage-*/
+artifacts/.check-*/
+
+# --- app build products: regenerate with `python scripts/build_app.py` ---
+app/data/terrain/
+app/dist/
+
+# --- demo recording: large; keep a copy on the demo laptop, not in git ---
+docs/demo-fallback.mp4
 
 # --- python ---
 __pycache__/
