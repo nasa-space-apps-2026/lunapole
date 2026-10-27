@@ -191,20 +191,30 @@ N4 requires **two clean runs**. Fill this in, then attest with the real timings:
 | | 1 | | | | |
 | | 2 | | | | |
 
+No human rehearsal or phone attestation is recorded in this checkout. The
+automated browser checks on 2026-10-27 did verify the four panels at 1280 px
+and 390 px and measured the verdict at **21.4-29.4 ms across the four demo
+sites** (headless Chrome 154, in-app timer, no network). That is enough to
+attest `app_panels` and `verdict_latency`, but not `demo_rehearsal` or
+`offline_phone`:
+
 ```bash
+# N1/N3 only: visual panels + measured verdict latency
+python verify/run_all.py --real --check \
+  --attest app_panels="four panels rendered at 1280 px and 390 px; Sun/Earth read from baked artifacts" \
+  --attest verdict_latency="21.4-29.4 ms over 4 sites, in-app timer, headless Chrome 154, no network"
+
+# N4: run only after the two human rehearsals and the airplane-mode phone test
 python verify/run_all.py --real --check \
   --attest demo_rehearsal="2 clean runs, 2:58 / 3:01, no gate failures" \
   --attest offline_phone="iPhone 13, airplane mode, local server, PASS" \
-  --attest app_panels="all four panels render the computed Sun and Earth from artifacts" \
-  --attest verdict_latency="9.9-27.2 ms over 6 clicks, in-app timer"
+  --attest app_panels="...your measured note..." \
+  --attest verdict_latency="...your measured note..."
 ```
 
-Only `verdict_latency` has been attested so far (it was actually measured in
-Chrome on the build machine). The other three examples are placeholders: replace
-them with your own measured notes or leave the gate BLOCKED.
-
 An attestation is a human claim with a note, not automated proof. Do not attest
-a run you did not do.
+a run you did not do. The two N4 rows above stay BLOCKED until a human fills
+the rehearsal log and tests the real phone.
 
 ---
 
