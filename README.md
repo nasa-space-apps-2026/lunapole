@@ -8,7 +8,7 @@
 
 ---
 
-## Status: demo build in progress (2026-10-25)
+## Status: demo build complete, two manual gates blocked (2026-10-28)
 
 All six parts are in the tree: P1-P4 science modules, the P5 offline app under
 `app/`, and the P6 bake/verification pipeline. The public-domain inputs are
@@ -18,8 +18,13 @@ artifacts, 14.40 MB). **No gate is claimed green here until
 `verify/results.json` says so**, produced by:
 
 ```bash
-python verify/run_all.py --real --check
+python verify/run_all.py --real --check --timeout 0
 ```
+
+The current record is **16 checks PASS, 0 FAIL, 3 SKIP**; N2 and N3 are green
+(including the full byte-identical rebake), and N1/N4 are held BLOCKED by
+human-only items: the panel sighting, two rehearsals and the airplane-mode
+phone test. See [Measured verification](#measured-verification).
 
 | Area | Code | Data/artifacts in this checkout | Gate |
 |---|---|---|---|
@@ -228,14 +233,22 @@ record from that failure is kept at
 `verify/results-2026-10-25-sleep-timeout.json`; it is superseded by the next
 clean run, not deleted.
 
-### Measured on this checkout (2026-10-25)
+`--only ID[,ID]` reruns selected checks and merges them into the existing
+`results.json` without rewriting its original `generated_utc`; each merge is
+appended to `reruns` and stamps `updated_utc`. Use it to replace a transient
+network BLOCKED, not to paper over a real failure.
+
+### Measured on this checkout (2026-10-28)
 
 Demo profile: **16 artifacts, 14.40 MB**, manifest
 `9b8961f8ab7aa9bdd66d66344f1ede49b3fc09607b8fdbf74e10bcaf8c5462b4`
 (four sites; 1-year labelled partial maps plus hourly series). `bake.py
 --verify` passes and `bake.py --check` rebakes into a temporary directory and
 reproduces every artifact byte-for-byte. `verify/results.json` is the
-machine-readable record; the table is a summary of it.
+machine-readable record; the table is a summary of it. Its `generated_utc` is
+the full run; `updated_utc` and the `reruns` list record the targeted
+`--only horizons` rerun that replaced a transient network BLOCKED with PASS
+(0.0076 deg / 0.0070 deg, unchanged).
 
 | Check | Measured |
 |---|---|

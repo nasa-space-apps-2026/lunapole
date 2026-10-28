@@ -183,7 +183,7 @@ on low-horizon pixels) is documented and enforced as a check. See
 
 ## P5 — App / frontend
 
-**Status: DONE (2026-10-25).** `app/index.html` + `app/src/*.js` +
+**Status: DONE (2026-10-28).** `app/index.html` + `app/src/*.js` +
 vendored Three.js, assembled into `app/dist` by `scripts/build_app.py`. Browser
 parsers are cross-checked against the Python readers under Node by
 `verify/verify_app_readers.py`; the phone/rehearsal items remain manual.
@@ -210,10 +210,11 @@ Vite build step by design), four panels, timeline, verdict engine
 
 ## P6 — Integration, quality, demo
 
-**Status: IN PROGRESS (2026-10-25).** Bake, manifest, artifact pipeline,
-`verify/` and the demo script are in place and measured. The 3-minute rehearsal
-and the airplane-mode phone test are still outstanding (N4), and the manual
-panel attestation keeps N1 BLOCKED.
+**Status: DONE except the human-only gates (2026-10-28).** Bake, manifest,
+artifact pipeline, `verify/` and the demo script are in place and measured;
+N2 and N3 are green, including the byte-identical `bake --check`. The 3-minute
+rehearsals and the airplane-mode phone test are still outstanding (N4), and the
+manual panel sighting keeps N1 BLOCKED.
 
 **Owns:** `build/lunapole/bake.py`, artifact pipeline, `verify/`, README, demo script
 

@@ -3,15 +3,16 @@
 **Owner:** P6. **Hard limit:** 3 minutes. **Rule:** never cut the honesty line to
 save time; cut the Earth map instead.
 
-> **Status (2026-10-25):** the app, the bake and the verifiers are in the tree.
+> **Status (2026-10-28):** the app, the bake and the verifiers are in the tree.
 > The demo-profile bake is promoted (manifest `9b8961f8ab7a...`), the app bundle
 > is built from it, and the one-click verdict was measured at 9.9-27.2 ms in
-> Chrome on this machine. The two human items are still outstanding: two clean
-> 3-minute runs and the airplane-mode phone test. Until a human does them and
-> attests them, N4 is BLOCKED and N1 is BLOCKED on the manual panel check. There
-> is a static, no-JavaScript fallback page at `docs/fallback/index.html` (no
-> video yet). Run `python verify/run_all.py --real --check` first. If any gate
-> is still blocked, say which one before you start.
+> Chrome on this machine. N2 and N3 are green, including the byte-identical
+> `bake --check`. The two human items are still outstanding: two clean 3-minute
+> runs and the airplane-mode phone test. Until a human does them and attests
+> them, N4 is BLOCKED and N1 is BLOCKED on the manual panel check. There is a
+> static, no-JavaScript fallback page at `docs/fallback/index.html` (no video
+> yet). Run `python verify/run_all.py --real --check --timeout 0` first. If any
+> gate is still blocked, say which one before you start.
 
 ---
 

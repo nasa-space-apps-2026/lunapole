@@ -570,12 +570,25 @@ def main(argv=None):
                     help="thread count pinned for subprocesses (default 1)")
     ap.add_argument("--attest", action="append", metavar="ID=NOTE",
                     help="attest a manual check (repeatable)")
+    ap.add_argument("--only", metavar="ID[,ID]",
+                    help="run only these check ids and merge them into an "
+                         "existing --results record (does not rebake unless "
+                         "bake_check is listed)")
     ap.add_argument("--results", default=str(RESULTS_PATH),
                     help="path for the JSON result record")
     ap.add_argument("--list", action="store_true",
                     help="list checks and exit without running")
     args = ap.parse_args(argv)
     args.attest = parse_attest(args.attest)
+
+    known = {spec["id"] for spec in CHECKS}
+    only = []
+    if args.only:
+        only = [x.strip() for x in args.only.split(",") if x.strip()]
+        unknown = [x for x in only if x not in known]
+        if unknown:
+            ap.error(f"unknown check id(s): {', '.join(unknown)}; "
+                     f"known: {', '.join(sorted(known))}")
 
     if args.list:
         print("gate  id                 required  title")
@@ -588,14 +601,18 @@ def main(argv=None):
 
     sites = load_sites()
     started = datetime.now(timezone.utc)
+    selected = [s for s in CHECKS if not only or s["id"] in only]
     print("LUNAPOLE verification")
     print(f"  root  {ROOT}")
     print(f"  mode  real={'yes' if args.real else 'no'}  "
           f"check={'yes' if args.check else 'no'}  "
-          f"network={'no' if args.no_network else 'yes'}\n")
+          f"network={'no' if args.no_network else 'yes'}")
+    if only:
+        print(f"  only  {', '.join(only)}  (merged into {args.results})")
+    print()
 
     records = []
-    for spec in CHECKS:
+    for spec in selected:
         reason = ""
         optional = ("no_real" in spec["optional_when"] and not args.real) or \
                    ("no_check" in spec["optional_when"] and not args.check) or \
@@ -623,6 +640,8 @@ def main(argv=None):
         rec.update({
             "id": spec["id"], "gate": spec["gate"],
             "title": spec["title"], "help": spec["help"],
+            "run_utc": datetime.now(timezone.utc).replace(microsecond=0)
+                               .isoformat().replace("+00:00", "Z"),
         })
         records.append(rec)
 
@@ -637,6 +656,24 @@ def main(argv=None):
                 print(f"          {line}")
             for line in rec["tail"][-12:]:
                 print(f"          | {line}")
+
+    # ---- merge a targeted rerun into the existing record ----
+    base = None
+    if only and Path(args.results).exists():
+        try:
+            base = json.loads(Path(args.results).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"cannot merge into {args.results}: {exc}", file=sys.stderr)
+            return 1
+        if base.get("schema") != "lunapole.verify/1":
+            print(f"cannot merge: {args.results} has schema "
+                  f"{base.get('schema')!r}", file=sys.stderr)
+            return 1
+        by_id = {r["id"]: r for r in base.get("checks", [])}
+        for rec in records:
+            by_id[rec["id"]] = rec
+        records = [by_id[spec["id"]] for spec in CHECKS
+                   if spec["id"] in by_id]
 
     # ---- gate roll-up ----
     print()
@@ -669,24 +706,43 @@ def main(argv=None):
         overall = "BLOCKED"
     print(f"\n{overall}")
 
+    stamp = started.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    options = {
+        "real": args.real,
+        "check": args.check,
+        "network": not args.no_network,
+        "timeout_s": args.timeout,
+        "threads": args.threads,
+        "attest": args.attest,
+    }
     payload = {
         "schema": "lunapole.verify/1",
-        "generated_utc": started.replace(microsecond=0)
-                                .isoformat().replace("+00:00", "Z"),
+        "generated_utc": stamp,
         "root": str(ROOT),
-        "options": {
-            "real": args.real,
-            "check": args.check,
-            "network": not args.no_network,
-            "timeout_s": args.timeout,
-            "threads": args.threads,
-            "attest": args.attest,
-        },
+        "options": options,
         "overall": overall,
         "counts": counts,
         "gates": gates,
         "checks": records,
     }
+    if base is not None:
+        # A targeted rerun must not rewrite history: keep the original run
+        # stamp and options, append this rerun as its own record, and let the
+        # merged checks/gates/counts above be the current truth.
+        merged = dict(base.get("options") or {})
+        merged["attest"] = {**(merged.get("attest") or {}), **args.attest}
+        payload["generated_utc"] = base.get("generated_utc", stamp)
+        payload["options"] = merged
+        payload["updated_utc"] = stamp
+        reruns = list(base.get("reruns") or [])
+        reruns.append({
+            "utc": stamp,
+            "only": only,
+            "options": options,
+            "results": {r["id"]: r["status"] for r in records
+                        if r["id"] in only},
+        })
+        payload["reruns"] = reruns
     out = Path(args.results)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes((json.dumps(payload, indent=2, sort_keys=True,
