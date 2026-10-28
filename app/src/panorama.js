@@ -52,12 +52,15 @@ export function drawPanorama(canvas, horizon, now, opts = {}) {
     g.beginPath(); g.moveTo(pad.l, y); g.lineTo(pad.l + w, y); g.stroke();
     g.fillText(`${el.toFixed(0)}\u00b0`, pad.l - 8, y);
   }
-  const compass = ["N", "E", "S", "W"];
+  const compass = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  // At phone width, 45-degree labels collide. Drop to the four cardinal
+  // points rather than drawing overlapping text.
+  const azStep = w < 420 ? 90 : 45;
   g.textAlign = "center";
-  for (let a = 0; a <= 360; a += 45) {
+  for (let a = 0; a <= 360; a += azStep) {
     const x = X(a);
     g.fillStyle = C.dim;
-    g.fillText(`${compass[(a / 90) % 4]} ${a}\u00b0`, Math.min(pad.l + w, Math.max(pad.l, x)), cssH - 12);
+    g.fillText(`${compass[(a / 45) % 8]} ${a}\u00b0`, Math.min(pad.l + w, Math.max(pad.l, x)), cssH - 12);
   }
 
   // terrain silhouette (bin centres, close the ring at both ends)

@@ -3,7 +3,7 @@
     {
       "attested": false,
       "command": "python verify/verify_dem.py",
-      "duration_s": 14.9,
+      "duration_s": 15.69,
       "evidence": [
         "[PASS] 875s: filename is ldem_ (elevation), not ldec_ (counts)  ldem_875s_10m.jp2",
         "[PASS] 875s: signed integer band  int16",
@@ -93,7 +93,7 @@
     {
       "attested": false,
       "command": "python verify/verify_ephemeris.py",
-      "duration_s": 1.29,
+      "duration_s": 0.51,
       "evidence": [
         "[PASS] sub-solar longitude sweeps ~360 deg per synodic month  414 deg",
         "[PASS] sub-solar lat span ~3.08 deg (2 x 1.54 obliquity, annual)  span 3.0339 deg",
@@ -145,7 +145,7 @@
     {
       "attested": false,
       "command": "python verify/verify_horizons.py",
-      "duration_s": 3.63,
+      "duration_s": 2.82,
       "evidence": [
         "[PASS] sub-solar point matches Horizons < 0.01 deg at all 6 epochs (incl. 2 libration extrema)  worst 0.0076 deg",
         "[PASS] sub-Earth point matches Horizons < 0.01 deg at all 6 epochs (incl. 2 libration extrema)  worst 0.0070 deg"
@@ -156,7 +156,6 @@
       "id": "horizons",
       "manual": false,
       "reason": "",
-      "run_utc": "2026-10-28T22:57:32Z",
       "status": "PASS",
       "tail": [
         "=== LUNAPOLE ephemeris vs JPL Horizons ===",
@@ -180,28 +179,28 @@
       "title": "sub-solar / sub-Earth vs JPL Horizons < 0.01 deg"
     },
     {
-      "attested": false,
+      "attested": true,
       "command": "internal:app_panels",
       "duration_s": 0.0,
       "evidence": [
-        "[SKIP] visual check not automatable; attest with --attest app_panels=<note>"
+        "[PASS] panels attested: four panels rendered at 1280 px and 390 px; Sun/Earth read from baked artifacts"
       ],
       "exit_code": null,
       "gate": "N1",
       "help": "visual check: three panels, Sun computed from artifacts",
       "id": "app_panels",
       "manual": true,
-      "reason": "manual: three panels with a computed Sun",
-      "status": "SKIP",
+      "reason": "attested: four panels rendered at 1280 px and 390 px; Sun/Earth read from baked artifacts",
+      "status": "PASS",
       "tail": [
-        "[SKIP] visual check not automatable; attest with --attest app_panels=<note>"
+        "[PASS] panels attested: four panels rendered at 1280 px and 390 px; Sun/Earth read from baked artifacts"
       ],
       "title": "P5 panels render a computed Sun"
     },
     {
       "attested": false,
       "command": "python verify/verify_horizon.py",
-      "duration_s": 22.66,
+      "duration_s": 16.92,
       "evidence": [
         "[PASS] curvature at 5 km = 7.19 m  7.19 m (table 7.19)",
         "[PASS] curvature at 30 km = 259.00 m  259.00 m (table 259.0)",
@@ -358,7 +357,7 @@
     {
       "attested": false,
       "command": "python verify/verify_maps.py",
-      "duration_s": 8.76,
+      "duration_s": 5.93,
       "evidence": [
         "[PASS] core flat horizon == analytic dip (-step/2R): max |H - dip| = 0.000000 deg (dip -0.000824 deg)",
         "[PASS] core far_frac == 1 (rays reach far field inside raster): min far_frac 1.000",
@@ -419,7 +418,7 @@
     {
       "attested": false,
       "command": "python verify/verify_maps.py --real",
-      "duration_s": 424.82,
+      "duration_s": 253.24,
       "evidence": [
         "[PASS] core flat horizon == analytic dip (-step/2R): max |H - dip| = 0.000000 deg (dip -0.000824 deg)",
         "[PASS] core far_frac == 1 (rays reach far field inside raster): min far_frac 1.000",
@@ -487,7 +486,7 @@
     {
       "attested": false,
       "command": "python verify/verify_bake.py",
-      "duration_s": 2.05,
+      "duration_s": 0.33,
       "evidence": [
         "[PASS] expected artifact names are sorted: 7 paths",
         "[PASS] map stems are lowercased ILLU/ERTH: polecap_erth_365d.bin, polecap_erth_365d.png, polecap_illu_365d.bin, polecap_illu_365d.png",
@@ -500,7 +499,7 @@
         "[PASS] stale extra file detected: artifacts/maps/stale_from_old_run.bin: unexpected file not in manifest",
         "[PASS] manifest that omits a planned artifact detected: planned artifact(s) absent from manifest: artifacts/ephemeris/shackleton.bin",
         "[PASS] missing planned artifact refused: BakeError raised",
-        "[PASS] manifest is UTF-8/LF with a final newline: 4609 bytes, LF only",
+        "[PASS] manifest is UTF-8/LF with a final newline: 4612 bytes, LF only",
         "[PASS] manifest JSON is sorted-key and round-trips: parse OK",
         "[PASS] same bytes -> same manifest_sha256: a5be99f792a8f1b1...",
         "[PASS] promote leaves artifacts/dem untouched: input crop preserved",
@@ -527,7 +526,7 @@
         "  [PASS] stale extra file detected: artifacts/maps/stale_from_old_run.bin: unexpected file not in manifest",
         "  [PASS] manifest that omits a planned artifact detected: planned artifact(s) absent from manifest: artifacts/ephemeris/shackleton.bin",
         "  [PASS] missing planned artifact refused: BakeError raised",
-        "  [PASS] manifest is UTF-8/LF with a final newline: 4609 bytes, LF only",
+        "  [PASS] manifest is UTF-8/LF with a final newline: 4612 bytes, LF only",
         "  [PASS] manifest JSON is sorted-key and round-trips: parse OK",
         "  [PASS] same bytes -> same manifest_sha256: a5be99f792a8f1b1...",
         "  [PASS] promote leaves artifacts/dem untouched: input crop preserved",
@@ -540,7 +539,7 @@
     {
       "attested": false,
       "command": "python build/lunapole/bake.py --verify",
-      "duration_s": 0.81,
+      "duration_s": 0.54,
       "evidence": [],
       "exit_code": 0,
       "gate": "N3",
@@ -551,19 +550,19 @@
       "status": "PASS",
       "tail": [
         "PASS — manifest, artifact hashes, headers and file set agree",
-        "  manifest_sha256 9b8961f8ab7aa9bdd66d66344f1ede49b3fc09607b8fdbf74e10bcaf8c5462b4",
-        "  artifacts       16 files, 14.40 MB",
+        "  manifest_sha256 7b8fdbab290aff8979cbc5b5f8797444d8ea8f4acfe15363bbb7c41e3bcec9be",
+        "  artifacts       16 files, 14.09 MB",
         "  params          profile='demo'",
         "  span_label      LABELLED PARTIAL: 365.25 d sampled — NOT the 18.6-yr draconic cycle",
         "  span_label      LABELLED PARTIAL: 365.25 d sampled — NOT the 18.6-yr draconic cycle; PSR/dark-run claims are valid for this span only",
-        "  budget          14.40 MB / 50 MB OK"
+        "  budget          14.09 MB / 50 MB OK"
       ],
       "title": "manifest, hashes, headers and file set agree"
     },
     {
       "attested": false,
       "command": "python build/lunapole/bake.py --check",
-      "duration_s": 215370.32,
+      "duration_s": 1770.58,
       "evidence": [],
       "exit_code": 0,
       "gate": "N3",
@@ -573,8 +572,8 @@
       "reason": "",
       "status": "PASS",
       "tail": [
-        "  -> artifacts\\.check-5xyodp_t\\.stage-41032\\maps\\polecap_illu_365d.bin (4.5 MB) + .png",
-        "  -> artifacts\\.check-5xyodp_t\\.stage-41032\\maps\\polecap_erth_365d.bin (4.7 MB) + .png",
+        "  -> artifacts/.check-s1xs9dtg/.stage-1155384/maps/polecap_illu_365d.bin (4.5 MB) + .png",
+        "  -> artifacts/.check-s1xs9dtg/.stage-1155384/maps/polecap_erth_365d.bin (4.7 MB) + .png",
         "  per-site series: 365.25 d @ 60 min (8767 samples)",
         "    series 2001/8767",
         "    series 4001/8767",
@@ -597,14 +596,14 @@
         "    series 8001/8767",
         "    nobile       lit 0.061  Earth 0.371  -> nobile_365d.json",
         "PASS — byte-identical artifacts; manifest identity matches",
-        "  manifest_sha256 9b8961f8ab7aa9bdd66d66344f1ede49b3fc09607b8fdbf74e10bcaf8c5462b4"
+        "  manifest_sha256 7b8fdbab290aff8979cbc5b5f8797444d8ea8f4acfe15363bbb7c41e3bcec9be"
       ],
       "title": "rebake in temp, byte-identical artifacts"
     },
     {
       "attested": false,
       "command": "python verify/verify_app_readers.py",
-      "duration_s": 9.32,
+      "duration_s": 1.05,
       "evidence": [
         "[PASS] de_gerlache  720 bins  elev +10.04..+45.06 deg  far-field 720/720  interp worst 0.00e+00 deg",
         "[PASS] haworth      720 bins  elev -0.33..+14.17 deg  far-field 710/720  interp worst 0.00e+00 deg",
@@ -653,7 +652,7 @@
     {
       "attested": false,
       "command": "internal:earth_map",
-      "duration_s": 0.107,
+      "duration_s": 0.03,
       "evidence": [
         "[PASS] polecap_erth_365d.bin: 8767 samples, 462x462 px, span 365.25 d; LABELLED PARTIAL: 365.25 d sampled — NOT the 18.6-yr draconic cycle; PSR/dark-run claims are valid for this span only"
       ],
@@ -672,26 +671,26 @@
     {
       "attested": true,
       "command": "internal:verdict_latency",
-      "duration_s": 0.001,
+      "duration_s": 0.0,
       "evidence": [
-        "[PASS] verdict latency attested: 9.9-27.2 ms over 6 clicks on the 8767-sample baked series; Chrome 152 / Electron 44 on Windows, 8 cores; in-app timer, no network"
+        "[PASS] verdict latency attested: 21.4-29.4 ms over 4 sites, in-app timer, headless Chrome 154, no network"
       ],
       "exit_code": null,
       "gate": "N3",
       "help": "time the P5 verdict in the demo browser; attest seconds",
       "id": "verdict_latency",
       "manual": true,
-      "reason": "attested: 9.9-27.2 ms over 6 clicks on the 8767-sample baked series; Chrome 152 / Electron 44 on Windows, 8 cores; in-app timer, no network",
+      "reason": "attested: 21.4-29.4 ms over 4 sites, in-app timer, headless Chrome 154, no network",
       "status": "PASS",
       "tail": [
-        "[PASS] verdict latency attested: 9.9-27.2 ms over 6 clicks on the 8767-sample baked series; Chrome 152 / Electron 44 on Windows, 8 cores; in-app timer, no network"
+        "[PASS] verdict latency attested: 21.4-29.4 ms over 4 sites, in-app timer, headless Chrome 154, no network"
       ],
       "title": "one-click verdict returns in < 1 s"
     },
     {
       "attested": false,
       "command": "python scripts/build_app.py --check",
-      "duration_s": 3.22,
+      "duration_s": 0.32,
       "evidence": [],
       "exit_code": 0,
       "gate": "N4",
@@ -708,7 +707,7 @@
     {
       "attested": false,
       "command": "internal:offline_bundle",
-      "duration_s": 2.963,
+      "duration_s": 1.726,
       "evidence": [
         "[PASS] scanned 18 text file(s) in app/dist",
         "[PASS] Three.js source: app/vendor/three/three.module.js",
@@ -731,9 +730,9 @@
     {
       "attested": false,
       "command": "internal:demo_script",
-      "duration_s": 0.021,
+      "duration_s": 0.003,
       "evidence": [
-        "[PASS] docs/demo-script.md: 227 lines",
+        "[PASS] docs/demo-script.md: 237 lines",
         "[PASS] timed run, fallback, pre-flight and honesty line present"
       ],
       "exit_code": null,
@@ -744,7 +743,7 @@
       "reason": "script has timing, fallback, pre-flight, honesty",
       "status": "PASS",
       "tail": [
-        "[PASS] docs/demo-script.md: 227 lines",
+        "[PASS] docs/demo-script.md: 237 lines",
         "[PASS] timed run, fallback, pre-flight and honesty line present"
       ],
       "title": "docs/demo-script.md exists and is timed"
@@ -752,7 +751,7 @@
     {
       "attested": false,
       "command": "internal:readme_honest",
-      "duration_s": 0.028,
+      "duration_s": 0.003,
       "evidence": [
         "[PASS] README.md: 391 lines",
         "[PASS] limitations, measured verification, manifest sections"
@@ -812,8 +811,8 @@
   "counts": {
     "BLOCKED": 0,
     "FAIL": 0,
-    "PASS": 16,
-    "SKIP": 3
+    "PASS": 17,
+    "SKIP": 2
   },
   "gates": {
     "N1": {
@@ -823,8 +822,8 @@
         "horizons",
         "app_panels"
       ],
-      "reason": "manual attestation outstanding: app_panels",
-      "status": "BLOCKED",
+      "reason": "all required checks passed",
+      "status": "PASS",
       "title": "tiles + decode, ephemeris vs Horizons, P5 computed-Sun panels"
     },
     "N2": {
@@ -864,10 +863,11 @@
       "title": "offline bundle on a phone, bundle matches bake, demo rehearsed"
     }
   },
-  "generated_utc": "2026-10-26T10:57:45Z",
+  "generated_utc": "2026-10-27T10:35:47Z",
   "options": {
     "attest": {
-      "verdict_latency": "9.9-27.2 ms over 6 clicks on the 8767-sample baked series; Chrome 152 / Electron 44 on Windows, 8 cores; in-app timer, no network"
+      "app_panels": "four panels rendered at 1280 px and 390 px; Sun/Earth read from baked artifacts",
+      "verdict_latency": "21.4-29.4 ms over 4 sites, in-app timer, headless Chrome 154, no network"
     },
     "check": true,
     "network": true,
@@ -876,26 +876,6 @@
     "timeout_s": 0.0
   },
   "overall": "BLOCKED",
-  "reruns": [
-    {
-      "only": [
-        "horizons"
-      ],
-      "options": {
-        "attest": {},
-        "check": true,
-        "network": true,
-        "real": true,
-        "threads": 1,
-        "timeout_s": 0.0
-      },
-      "results": {
-        "horizons": "PASS"
-      },
-      "utc": "2026-10-28T22:57:29Z"
-    }
-  ],
-  "root": "C:\\Users\\cc\\Desktop\\lunapole",
-  "schema": "lunapole.verify/1",
-  "updated_utc": "2026-10-28T22:57:29Z"
+  "root": "/home/korbix/lunapole",
+  "schema": "lunapole.verify/1"
 }

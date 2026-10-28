@@ -101,11 +101,13 @@ export function drawTimeline(canvas, tl, index) {
     g.fillRect(x, Y(eHi), 1, Math.max(1, Y(eLo) - Y(eHi)));
   }
 
-  // month ticks from the real start/end, not from an assumed calendar
+  // month ticks from the real start/end, not from an assumed calendar.
+  // Thin the labels on narrow canvases so they do not overlap.
   const t0 = Date.parse(tl.startUtc), t1 = Date.parse(tl.endUtc);
   g.textAlign = "center";
   const start = new Date(t0);
-  for (let m = 0; m < 13; m++) {
+  const monthStep = w < 420 ? 3 : w < 700 ? 2 : 1;
+  for (let m = 0; m < 13; m += monthStep) {
     const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + m, 1));
     const frac = (d.getTime() - t0) / (t1 - t0);
     if (frac < 0 || frac > 1) continue;

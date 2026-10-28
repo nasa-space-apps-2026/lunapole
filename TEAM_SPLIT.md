@@ -211,10 +211,11 @@ Vite build step by design), four panels, timeline, verdict engine
 ## P6 — Integration, quality, demo
 
 **Status: DONE except the human-only gates (2026-10-28).** Bake, manifest,
-artifact pipeline, `verify/` and the demo script are in place and measured;
-N2 and N3 are green, including the byte-identical `bake --check`. The 3-minute
-rehearsals and the airplane-mode phone test are still outstanding (N4), and the
-manual panel sighting keeps N1 BLOCKED.
+artifact pipeline, `verify/` and the demo script are in place and measured. The
+published record (`verify/results.json`, 2026-10-27) is 17 PASS / 0 FAIL /
+2 SKIP: N1, N2 and N3 are green, including the byte-identical `bake --check`,
+with the four panels attested at 1280 px and 390 px. The 3-minute rehearsals
+and the airplane-mode phone test are still outstanding (N4).
 
 **Owns:** `build/lunapole/bake.py`, artifact pipeline, `verify/`, README, demo script
 

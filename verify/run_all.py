@@ -589,6 +589,12 @@ def main(argv=None):
         if unknown:
             ap.error(f"unknown check id(s): {', '.join(unknown)}; "
                      f"known: {', '.join(sorted(known))}")
+        if not Path(args.results).exists():
+            # Fail closed: a partial run must never write a fresh record that
+            # looks like a full gate report.
+            print(f"--only needs an existing base record at {args.results}; "
+                  f"run the full suite first", file=sys.stderr)
+            return 2
 
     if args.list:
         print("gate  id                 required  title")

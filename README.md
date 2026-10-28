@@ -8,23 +8,27 @@
 
 ---
 
-## Status: demo build complete, two manual gates blocked (2026-10-28)
+## Status: demo build complete, N4 manual gates blocked (2026-10-28)
 
 All six parts are in the tree: P1-P4 science modules, the P5 offline app under
 `app/`, and the P6 bake/verification pipeline. The public-domain inputs are
 downloaded and SHA-256 checked, the six site crops are made, the terrain
 heightmaps are exported, and the demo-profile bake has been promoted (16
-artifacts, 14.40 MB). **No gate is claimed green here until
-`verify/results.json` says so**, produced by:
+artifacts). **No gate is claimed green here until `verify/results.json` says
+so**, produced by:
 
 ```bash
 python verify/run_all.py --real --check --timeout 0
 ```
 
-The current record is **16 checks PASS, 0 FAIL, 3 SKIP**; N2 and N3 are green
-(including the full byte-identical rebake), and N1/N4 are held BLOCKED by
-human-only items: the panel sighting, two rehearsals and the airplane-mode
-phone test. See [Measured verification](#measured-verification).
+The published record (`verify/results.json`, 2026-10-27) is **17 checks PASS,
+0 FAIL, 2 SKIP**: N1, N2 and N3 are green, including a byte-identical rebake,
+and the panel sighting plus verdict latency are attested with notes. N4 is held
+BLOCKED only by the two human rehearsals and the airplane-mode phone test. A
+second record, `verify/results-2026-10-26-local-bake.json`, is the local
+16-PASS/3-SKIP run against this machine's `9b8961f8...` bake; it has no local
+panel attestation, which is why its N1 is BLOCKED. See
+[Measured verification](#measured-verification).
 
 | Area | Code | Data/artifacts in this checkout | Gate |
 |---|---|---|---|
@@ -154,9 +158,9 @@ cannot be read without knowing what was actually computed.
 
 The canonical identity covers parameters, inputs, artifacts and totals. It
 deliberately **excludes** the wall clock, hostname, CLI line and the git-dirty
-flag. Two builds with the same inputs and parameters must produce the same
-`manifest_sha256`; `bake.py --check` proves byte identity by rebaking into a
-temporary directory and comparing every artifact hash.
+flag. Two builds with the same inputs, parameters and encoder stack must
+produce the same `manifest_sha256`; `bake.py --check` proves byte identity by
+rebaking into a temporary directory and comparing every artifact hash.
 
 The bake writes into `artifacts/.stage-<pid>/`, promotes the files, then writes
 the manifest. Files in the product directories that are not in the new plan are
@@ -168,8 +172,10 @@ Exit codes: `0` pass, `1` FAIL (bad input hash, bake or manifest mismatch),
 supported for reproducible timestamps and thread pinning.
 
 **Cross-machine caveat:** byte identity is tested on the same OS, Python,
-NumPy and kernel versions. Different libm/BLAS builds can change the last bits;
-the manifest will report that as a mismatch rather than hiding it.
+NumPy, rasterio/PNG encoder and kernel versions. Different libm/BLAS builds can
+change the last bits, and a different PNG encoder can change file bytes while
+the numbers stay the same. That is why `verify/` keeps both the published and
+the local record; the manifest reports a mismatch rather than hiding it.
 
 ---
 
@@ -219,11 +225,11 @@ and refuses to mark a manual check green without an explicit, note-bearing
 attestation:
 
 ```bash
-python verify/run_all.py --real --check \
+python verify/run_all.py --real --check --timeout 0 \
+  --attest app_panels="four panels at 1280 px and 390 px; Sun/Earth read from artifacts" \
+  --attest verdict_latency="21.4-29.4 ms over 4 sites, in-app timer, no network" \
   --attest demo_rehearsal="2 clean runs, 2:58 / 3:01" \
-  --attest offline_phone="iPhone 13, airplane mode, local server, PASS" \
-  --attest app_panels="all four panels, Sun and Earth from artifacts" \
-  --attest verdict_latency="9.9-27.2 ms over 6 clicks, in-app timer"
+  --attest offline_phone="iPhone 13, airplane mode, local server, PASS"
 ```
 
 The timeout is wall-clock. A laptop that sleeps during the long
@@ -238,17 +244,29 @@ clean run, not deleted.
 appended to `reruns` and stamps `updated_utc`. Use it to replace a transient
 network BLOCKED, not to paper over a real failure.
 
-### Measured on this checkout (2026-10-28)
+### Measured verification (published record 2026-10-27)
 
-Demo profile: **16 artifacts, 14.40 MB**, manifest
-`9b8961f8ab7aa9bdd66d66344f1ede49b3fc09607b8fdbf74e10bcaf8c5462b4`
-(four sites; 1-year labelled partial maps plus hourly series). `bake.py
---verify` passes and `bake.py --check` rebakes into a temporary directory and
-reproduces every artifact byte-for-byte. `verify/results.json` is the
-machine-readable record; the table is a summary of it. Its `generated_utc` is
-the full run; `updated_utc` and the `reruns` list record the targeted
-`--only horizons` rerun that replaced a transient network BLOCKED with PASS
-(0.0076 deg / 0.0070 deg, unchanged).
+Demo profile: **16 artifacts**, four sites, 1-year labelled partial maps plus
+hourly series. Two records are in `verify/` because artifact bytes are
+machine-local and artifacts are not committed:
+
+- `results.json` - the published 17-PASS run: manifest
+  `7b8fdbab290aff8979cbc5b5f8797444d8ea8f4acfe15363bbb7c41e3bcec9be`,
+  14.09 MB, with `app_panels` and `verdict_latency` attested.
+- `results-2026-10-26-local-bake.json` - this machine's 16-PASS run: manifest
+  `9b8961f8ab7aa9bdd66d66344f1ede49b3fc09607b8fdbf74e10bcaf8c5462b4`,
+  14.40 MB. Its N1 is BLOCKED because the panel attestation was not repeated
+  locally; its `reruns` list records a targeted `--only horizons` merge that
+  replaced a transient network BLOCKED with PASS (0.0076 deg / 0.0070 deg,
+  unchanged).
+
+The two manifests differ: artifact bytes are encoded on the machine that bakes,
+and byte identity is a same-machine property (see the cross-machine caveat
+above). The published numbers below agree across both runs; the two generated
+fallback pages differ only in their manifest/date/size header. `bake.py
+--verify` passes on both, and `bake.py --check` rebakes into a temporary
+directory and reproduces every artifact byte-for-byte on the machine that made
+the bake. Do not compare a manifest hash across machines.
 
 | Check | Measured |
 |---|---|
@@ -256,16 +274,16 @@ the full run; `updated_utc` and the `reruns` list record the targeted
 | N1 DEM decode and crops | **6/6 sites** round-trip; Shackleton local relief 830 m; no flat fills |
 | N1 ephemeris | pole solar minimum **-1.5715 deg** (expected -1.54), span **3.0861 deg**; libration half-amplitude **6.52 deg lon / 6.79 deg lat**; Earth disc **1.8609 deg** at 392 782 km |
 | N1 JPL Horizons, 6 epochs incl. 2 libration extrema | worst **0.0076 deg** sub-solar, **0.0070 deg** sub-Earth (target < 0.01) |
-| N1 P5 panels | **manual**; no human attestation yet, so N1 reports BLOCKED |
+| N1 P5 panels | **PASS, attested** on 2026-10-27: four panels at **1280 px and 390 px**, Sun/Earth read from baked artifacts; the local 2026-10-26 record has no such attestation |
 | N2 horizon, curvature, extended disc | 720 bins at 25 km / 10 m; curvature **259.00 m @ 30 km**, **2877.10 m @ 100 km**; far field never lowers a bin, gains up to **+29.23 deg** (de Gerlache), **+20.81 deg** (Malapert), **+13.61 deg** (Shackleton); Sun centre on the horizon -> **50 %** of the disc |
 | N2 synthetic map suite | deterministic bake, ILLU/ERTH round-trip, labelled-span rule: PASS |
 | N3 real-terrain maps | **26/26 PASS**; Earth closed form vs vector path **1.8e-15 deg**; Shackleton month shard **20.6 %** of its footprint dark over the month |
 | N3 map vs 720-bin truth march (`--mazarico`) | **31/31 PASS**; map optimism **+0.260** (map-best rim pixel) and **+0.268** (summit: map 0.984 vs 1-year truth 0.716); best truthful rim value **0.595**; full-cycle summit truth **0.706** |
 | N3 browser readers | 4 horizons, 6 terrains (exact int16), 4 series; worst interpolation error **0.0e+00 deg** |
-| N3 bake verify/check | PASS; temporary rebake **byte-identical** |
+| N3 bake verify/check | PASS; temporary rebake **byte-identical** (published run 1770 s) |
 | N3 Earth map | ILLU/ERTH **462x462**, 320 m/px, 120 azimuth bins, 8767 samples, `span_label` present; map-wide **18.2 %** dark, **47.9 %** any limb, **41.2 %** full disc |
-| N3 verdict latency | **9.9-27.2 ms** over six clicks; Chrome 152 / Electron 44 on Windows, 8 cores; in-app timer, no network |
-| N4 offline bundle | **29 files, 7.50 MB**, 0 mismatches or strays; **0 external runtime URLs**; Three.js vendored |
+| N3 verdict latency | **21.4-29.4 ms** over four sites, headless Chrome 154, in-app timer, no network (local Chrome run: **9.9-27.2 ms** over six clicks) |
+| N4 offline bundle | **29 payload files (30 with `BUILD.txt`), 7.51 MB**, 0 mismatches or strays; **0 external runtime URLs**; Three.js vendored |
 | N4 demo script / README | PASS: timed run, fallback, pre-flight, limitations present |
 | N4 rehearsal and phone | **BLOCKED**: two human 3-minute runs and an airplane-mode phone test are outstanding |
 
