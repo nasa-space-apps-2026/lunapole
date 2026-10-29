@@ -216,9 +216,14 @@ python verify/verify_horizon.py     # horizon/curvature/disc
 python verify/verify_maps.py --real # map products on real terrain
 python verify/verify_maps.py --mazarico  # map vs 720-bin truth + anchors
 python verify/verify_app_readers.py # browser readers vs Python, under Node
+node verify/ui-labels.test.mjs      # panel axis labels never read "undefined"
 python scripts/build_app.py --check # app/dist matches the bake
 python verify/run_all.py --real --check
 ```
+
+The same synthetic subset runs on every push/PR via
+`.github/workflows/verify.yml` (doctor informational, manifest contract,
+synthetic maps, syntax, UI label regression).
 
 `verify/run_all.py` writes `verify/results.json`, maps every check to N1-N4,
 and refuses to mark a manual check green without an explicit, note-bearing
@@ -383,10 +388,12 @@ the kernels, tiles and crops recorded in the manifest.
 | `build/lunapole/` | P2 frames/ephemeris, P3 horizon/earth/disc, P4 maps, P6 `bake.py` |
 | `app/` | P5 offline browser app: panel A terrain (Three.js), B baked map, C sky, D verdict, timeline; vendored Three.js |
 | `scripts/` | data fetch, site cropping, crop sanity check, terrain export, offline bundle, static fallback page |
-| `verify/` | verifiers, `doctor.py`, `run_all.py`, `verify_bake.py`, `verify_app_readers.py` |
+| `verify/` | verifiers, `doctor.py`, `run_all.py`, `verify_bake.py`, `verify_app_readers.py`, `ui-labels.test.mjs` |
 | `clps/` | verified constants and site catalogue (source of truth) |
 | `docs/` | horizon/maps/SPICE notes, demo script, generated static fallback |
 | `data/SOURCES.md` | public-domain sources and SHA-256 checksums |
+| `.github/workflows/` | CI: synthetic gates + syntax + UI label regression on every push |
+| `LICENSE` | MIT for the authored code; NASA/NAIF/PDS data stays public domain |
 | `TEAM_SPLIT.md` | ownership, nightly gates, stop rule |
 | `VERIFICATION.md` | what was checked, what the original spec got wrong |
 
@@ -412,7 +419,9 @@ verifiers.
   Regions Within Artemis Candidate Landing Regions.* doi:10.1029/2025JE009434
 
 All data sources are US public domain. Attribution is appreciated, not
-required. See `data/SOURCES.md` for URLs, sizes and checksums.
+required. See `data/SOURCES.md` for URLs, sizes and checksums. The code,
+scripts, app and documentation are MIT-licensed; the NASA/NAIF/PDS data stays
+public domain (see `LICENSE`).
 
 ---
 

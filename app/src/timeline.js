@@ -13,6 +13,12 @@ const C = {
   lit: "rgba(255,209,102,0.16)", dark: "rgba(60,80,120,0.22)",
 };
 
+// Narrow canvases get every second or third month so labels never overlap.
+export function monthStepFor(cssWidth, padL = 44, padR = 12) {
+  const w = cssWidth - padL - padR;
+  return w < 420 ? 3 : w < 700 ? 2 : 1;
+}
+
 export function prepare(series, horizon) {
   const r = series.rows;
   const n = r.et_tdb.length;
@@ -106,7 +112,7 @@ export function drawTimeline(canvas, tl, index) {
   const t0 = Date.parse(tl.startUtc), t1 = Date.parse(tl.endUtc);
   g.textAlign = "center";
   const start = new Date(t0);
-  const monthStep = w < 420 ? 3 : w < 700 ? 2 : 1;
+  const monthStep = monthStepFor(cssW, pad.l, pad.r);
   for (let m = 0; m < 13; m += monthStep) {
     const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + m, 1));
     const frac = (d.getTime() - t0) / (t1 - t0);

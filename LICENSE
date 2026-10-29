@@ -1,0 +1,37 @@
+MIT License
+
+Copyright (c) 2026 LUNAPOLE contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Scope of this licence
+
+The MIT terms above cover the source code, scripts and documentation authored
+for this project (README-SOUTHPOLE.md explains the design intent and is
+reference material, not flight software).
+
+The NASA/NAIF SPICE kernels, LRO LOLA polar DEMs and any other data fetched by
+scripts/fetch_data.py are NOT covered by this file. They are United States
+public-domain works (NASA PDS / NAIF) and remain so; see data/SOURCES.md for
+provenance and SHA-256 digests.
+
+The vendored Three.js source under app/vendor/three/ keeps its own MIT licence,
+reproduced in app/vendor/three/LICENSE.

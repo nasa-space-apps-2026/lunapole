@@ -11,6 +11,20 @@ const C = {
   far: "#6f8fbf", gap: "#c2415a", sun: "#ffd166", earth: "#5cb8ff",
 };
 
+// Axis helpers, exported so verify/ui-labels.test.mjs can assert the same
+// strings on a canvas-less CI runner (the previous inline arithmetic once
+// produced "undefined 45°" labels).
+const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+export function azLabel(degrees) {
+  return `${COMPASS[(degrees / 45) % 8]} ${degrees}\u00b0`;
+}
+
+/* Narrow panels take only the four cardinal points: 45-degree labels collide. */
+export function azStepFor(cssWidth, padL = 44, padR = 74) {
+  return cssWidth - padL - padR < 420 ? 90 : 45;
+}
+
 export function drawPanorama(canvas, horizon, now, opts = {}) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cssW = canvas.clientWidth || 640;
@@ -52,15 +66,12 @@ export function drawPanorama(canvas, horizon, now, opts = {}) {
     g.beginPath(); g.moveTo(pad.l, y); g.lineTo(pad.l + w, y); g.stroke();
     g.fillText(`${el.toFixed(0)}\u00b0`, pad.l - 8, y);
   }
-  const compass = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  // At phone width, 45-degree labels collide. Drop to the four cardinal
-  // points rather than drawing overlapping text.
-  const azStep = w < 420 ? 90 : 45;
+  const azStep = azStepFor(cssW, pad.l, pad.r);
   g.textAlign = "center";
   for (let a = 0; a <= 360; a += azStep) {
     const x = X(a);
     g.fillStyle = C.dim;
-    g.fillText(`${compass[(a / 45) % 8]} ${a}\u00b0`, Math.min(pad.l + w, Math.max(pad.l, x)), cssH - 12);
+    g.fillText(azLabel(a), Math.min(pad.l + w, Math.max(pad.l, x)), cssH - 12);
   }
 
   // terrain silhouette (bin centres, close the ring at both ends)

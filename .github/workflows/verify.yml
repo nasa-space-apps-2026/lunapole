@@ -1,0 +1,55 @@
+name: verify
+
+# CI for the automatable checks only. The DEM (~440 MB download), the
+# SPICE-vs-Horizons network comparison and the demo-profile bake take tens of
+# minutes and are therefore NOT re-run on every push; the committed
+# verify/results.json is the gate evidence for those. What CI proves on a bare
+# checkout is that the code as committed still parses, imports, and that its
+# synthetic engines pass.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install Python deps (numpy + spiceypy; no GDAL needed)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy spiceypy
+
+      - name: doctor (informational - fresh checkout has no data)
+        run: python verify/doctor.py
+        continue-on-error: true
+
+      - name: manifest contract (17 synthetic checks, no data needed)
+        run: python verify/verify_bake.py
+
+      - name: map engine (synthetic suite, no DEM needed)
+        run: python verify/verify_maps.py
+
+      - name: python syntax
+        run: python -m compileall -q build scripts verify clps
+
+      - name: javascript syntax
+        run: |
+          for f in app/src/*.js; do
+            node --check "$f" || exit 1
+          done
+
+      - name: UI axis-label regression (the old "undefined 45 deg" bug)
+        run: node verify/ui-labels.test.mjs
