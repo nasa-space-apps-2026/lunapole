@@ -1,0 +1,9 @@
+{
+  "_meta": {
+    "title": "N4 Rehearsal Log",
+    "owner": "P6",
+    "status": "TEMPLATE — fill in during actual rehearsals",
+    "rule": "Two clean runs required. Record site, verdict latency, and wall-time for each."
+  },
+  "rehearsals": []
+}

@@ -30,6 +30,31 @@ second record, `verify/results-2026-10-26-local-bake.json`, is the local
 panel attestation, which is why its N1 is BLOCKED. See
 [Measured verification](#measured-verification).
 
+### N4 rehearsal (manual gate)
+
+To complete N4, run two clean 3-minute demonstrations and attest the phone test:
+
+```bash
+# 1. Pre-flight validation
+python scripts/rehearsal_n4.py --pre-flight
+
+# 2. First rehearsal (manual, 3:00 timer)
+python scripts/rehearsal_n4.py --run 1
+
+# 3. Second rehearsal (manual, 3:00 timer)
+python scripts/rehearsal_n4.py --run 2
+
+# 4. Write attestation to results.json
+python scripts/rehearsal_n4.py --attest
+
+# 4. Attest only what really happened (fixtures replace values below)
+python verify/run_all.py --real --check \
+  --attest demo_rehearsal="2 clean runs, <h:mm:ss> / <h:mm:ss>" \
+  --attest offline_phone="<device, airplane mode, <network>, PASS>"
+```
+
+See `docs/demo-script.md` for the full 3-minute narrative and `docs/rehearsal-log.json` for measurements.
+
 | Area | Code | Data/artifacts in this checkout | Gate |
 |---|---|---|---|
 | P1 DEM decode + site crops | present | tiles + 6 crops present | see `results.json` |
