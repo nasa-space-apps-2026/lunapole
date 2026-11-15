@@ -159,7 +159,7 @@ A `ldec_` file opens cleanly, reports correct raster geometry and datatype, and 
 | Malapert | 80s (20 m) | −4902 m | −5383 to −4390 m |
 | Cabeus | 80s (20 m) | −5607 m | −5872 to −4947 m |
 
-Shackleton's 1515 m is the crater **rim**; de Gerlache's −3392 m is its **floor**. The local ranges confirm genuine topography, not a flat fill.
+Shackleton's 1515 m is on the crater's **inner slope**, not the rim peak; de Gerlache's −3392 m is near its **floor**. The local ranges confirm genuine topography, not a flat fill. (Corrected 2026-11-15 — see the re-verification section at the end: within 10 km of the Shackleton anchor the DEM drops to −5566 m, so the anchor sits roughly 1.5 km up the wall, and the often-quoted "rim" reading was wrong.)
 
 **Two GDAL performance notes** (in `verify_dem.py`): reading all three rasters in full takes 10+ minutes — use overviews. And `GetOverview(0)` is the *highest*-resolution overview, not the coarsest; use `GetOverviewCount()-1`. These tiles are square but their polar-stereographic content is circular, so corners are sentinel padding — restrict statistics to the inscribed circle or min/max becomes meaningless.
 
@@ -186,3 +186,49 @@ Shackleton's 1515 m is the crater **rim**; de Gerlache's −3392 m is its **floo
 - Terrain-aware far-field horizon (6× stronger than believed → better science story)
 
 **Fallback if the 18.6-year map won't finish:** ship a 1-year map and **label it as 1 year** in the UI. §6.5 already mandates this honesty. A labelled 1-year map beats an unlabelled incomplete 18.6-year one.
+---
+
+## Re-verification, 2026-11-15 — the coordinates and the illumination figures
+
+Trigger: the demo verdict (Shackleton 27.8 % lit, 511 h longest dark run) reads low
+against figures commonly quoted in the literature. Three hypotheses were tested;
+two died.
+
+**1. Longitude sign — no bug.** `planetarynames.wr.usgs.gov/Feature/5450` was fetched
+on the day and returns `Coordinate System: Planetographic, +East, -180 - 180`,
+`Center Latitude -89.67 °`, `Center Longitude 129.78 °`. That is byte-for-byte
+`clps/sites.json`, and it matches the code's east-positive
+`x = rho · sin(lon)`. The Gazetteer also lists older centre solutions from other
+control networks; the newest one is the one in the catalogue.
+
+**2. A 1-year span versus 18.6 years — not the explanation.** Rebaked per-site point
+runs over the full lunar precession cycle (`/tmp/opencode/reverify_cycle.py`):
+
+| Site | 1 yr, centre | 18.6 yr, centre | 1 yr, best pixel in crop |
+|---|---|---|---|
+| Shackleton | 27.6 % | 27.2 % | 66.8 % (67.3 % at 18.6 yr) |
+| de Gerlache | 0.0 % | 0.0 % | 50.4 % (49.1 %) |
+| Haworth | 7.7 % | — | 50.6 % |
+
+Span moves the centre number by 0.4 points. It cannot turn 27 % into a
+literature-grade number.
+
+**3. The label — this was the real defect.** The baked values reproduce exactly
+(27.79 % stored vs 27.6 % recomputed for a centre-of-Sun metric; the difference is
+the metric, since the bake counts *any* part of the solar disc). What differs is the
+**pixel**: published figures describe a rim peak or a candidate landing site, and the
+catalogue stores the IAU feature **centre**. Measured on the same crop, the centre
+sits high on Shackleton's inner slope: 1515 m, with terrain **−5566 m** inside a 10 km
+radius. de Gerlache's anchor sits at −3392 m with −4709 m within 5 km, so its horizon
+never drops below 10.04° and its centre never sees direct sun at all.
+
+**Resolution: label, do not re-bake.** Every site now carries
+`"site_kind": "IAU feature centre"` in `clps/sites.json` and `_meta.point_kind`
+explaining it. `scripts/build_app.py` copies the field into `app-data.json`, and the
+app prints the kind next to the coordinate above the panels and again in the verdict.
+No number in the UI changed, and no literature value was pasted in.
+
+**Nearest-pixel sampling is still deliberate.** Bilinear sampling of the same crop
+gives Shackleton 41.9 % instead of 27.6 % — a smoother model, not a correction. The
+project's contract is that every horizon number is traceable to one measured pixel;
+that stays true.

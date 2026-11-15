@@ -78,6 +78,20 @@ button.primary:hover { background: #24395c; }
   border-radius: 8px;
 }
 
+/* The coordinate that every panel below is measured at, stated with its kind.
+ * Deliberately quiet: it is a scope statement, not a warning. */
+.site-note {
+  margin: 12px 20px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--dim);
+  background: var(--panel-2);
+  color: var(--dim);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 main {
   display: grid;
   grid-template-columns: minmax(0, 1.32fr) minmax(0, 1fr);
@@ -178,6 +192,12 @@ canvas { display: block; width: 100%; height: 100%; }
   white-space: pre-wrap;
 }
 .verdict .latency { color: var(--good); }
+.verdict .caveat {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  color: var(--dim);
+}
 
 .scrubRow { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
 .scrubRow input[type="range"] { flex: 1; min-width: 220px; accent-color: #ffd166; }

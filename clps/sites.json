@@ -4,7 +4,8 @@
     "status": "VERIFIED 2026-10-12 — coordinates cross-checked against IAU Gazetteer feature IDs cited in Wikipedia infoboxes",
     "warning": "A 'coord_source' of 'iau_via_wikipedia' means the number came from the IAU Gazetteer feature page cited in the article infobox. Re-confirm against planetarynames.wr.usgs.gov before anything is published or used for a real mission claim.",
     "lon_convention": "planetographic, -180..+180. East positive. Add 360 for 0..360 E.",
-    "lat_convention": "selenographic, negative = southern hemisphere"
+    "lat_convention": "selenographic, negative = southern hemisphere",
+    "point_kind": "Every entry is an IAU feature CENTRE (the Gazetteer's catalogue anchor for the feature), confirmed against planetarynames.wr.usgs.gov on 2026-11-15. It is a stable reference point for terrain context, not a landing site, and not the bright rim peak that published illumination figures usually describe."
   },
 
   "sites": [
@@ -17,6 +18,7 @@
       "iau_id": "5450",
       "dist_from_south_pole_deg": 0.33,
       "coord_source": "iau_via_wikipedia",
+      "site_kind": "IAU feature centre",
       "interest": "Closest named feature to the pole. Rim peaks see near-continuous sun; interior is a permanent shadow cold trap. THE reference site for any south-pole illumination demo.",
       "priority": "P1"
     },
@@ -29,6 +31,7 @@
       "iau_id": "1439",
       "dist_from_south_pole_deg": 1.50,
       "coord_source": "iau_via_wikipedia",
+      "site_kind": "IAU feature centre",
       "interest": "Artemis III candidate region 'de Gerlache Rim 1/2' sits on this crater's rim. 1.5 deg from pole = extreme low sun, heavy topographic shadowing.",
       "priority": "P1"
     },
@@ -41,6 +44,7 @@
       "iau_id": "14502",
       "dist_from_south_pole_deg": 3.10,
       "coord_source": "iau_via_wikipedia",
+      "site_kind": "IAU feature centre",
       "interest": "One of the 9 current Artemis III candidate regions. Rim is a candidate landing area.",
       "priority": "P1"
     },
@@ -53,6 +57,7 @@
       "iau_id": "4321",
       "dist_from_south_pole_deg": 4.72,
       "coord_source": "iau_via_wikipedia",
+      "site_kind": "IAU feature centre",
       "interest": "Artemis III regions 'Nobile Rim 1/2'. NOTE: these are descriptors on the crater rim, NOT gazetteer features. Use crater centre as an anchor only.",
       "priority": "P2"
     },
@@ -65,6 +70,7 @@
       "iau_id": "3603",
       "dist_from_south_pole_deg": 5.10,
       "coord_source": "iau_via_wikipedia",
+      "site_kind": "IAU feature centre",
       "interest": "Artemis III region 'Malapert Massif'. IM-1 (Odysseus) landed near Malapert A at 80.13S 1.44E — see clps_missions.json.",
       "priority": "P2"
     },
@@ -77,6 +83,7 @@
       "iau_id": "953",
       "dist_from_south_pole_deg": 5.10,
       "coord_source": "iau_via_wikipedia",
+      "site_kind": "IAU feature centre",
       "interest": "Large shadowed crater, candidate for volatiles. Artifacts of distant-sun lighting make it a good demo contrast vs Shackleton.",
       "priority": "P2"
     }

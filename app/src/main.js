@@ -15,7 +15,8 @@ import { Terrain3D } from "./terrain3d.js";
 const $ = (id) => document.getElementById(id);
 const els = {
   site: $("siteSelect"), build: $("buildInfo"), footerBuild: $("footerBuild"),
-  banner: $("banner"), terrainMeta: $("terrainMeta"), terrainNote: $("terrainNote"),
+  siteNote: $("siteNote"), banner: $("banner"),
+  terrainMeta: $("terrainMeta"), terrainNote: $("terrainNote"),
   map: $("map"), mapSpan: $("mapSpanLabel"), mapNote: $("mapNote"),
   pano: $("pano"), skyMeta: $("skyMeta"), skyNote: $("skyNote"),
   verdictBtn: $("verdictBtn"), verdictOut: $("verdictOut"), verdictSpan: $("verdictSpanLabel"),
@@ -54,6 +55,12 @@ async function selectSite(id) {
   if (!site) return;
   state.site = site;
   els.site.value = site.id;
+  els.siteNote.hidden = false;
+  els.siteNote.textContent =
+    `${site.name} \u00b7 ${siteKind(site)} ${fmtLatLon(site)} \u00b7 every ` +
+    `number below is measured at this catalogue anchor, which is not a ` +
+    `landing site and not the rim peak that published illumination figures ` +
+    `usually describe.`;
 
   try {
     const [horizon, series, terrain] = await Promise.all([
@@ -146,6 +153,20 @@ function render() {
     `${now.earthVisible ? "visible" : "not visible"}`;
 }
 
+/* Coordinates are always printed with the kind that produced them. A bare
+ * "Shackleton, -89.67 129.78" reads to an audience as a landing site; it is
+ * the IAU catalogue anchor for the crater, and the app must not imply more. */
+function fmtLatLon(site) {
+  const ns = site.lat >= 0 ? "+" : "\u2212";
+  const ew = site.lon >= 0 ? "+" : "\u2212";
+  return `${ns}${Math.abs(site.lat).toFixed(3)}\u00b0, ` +
+    `${ew}${Math.abs(site.lon).toFixed(2)}\u00b0`;
+}
+
+function siteKind(site) {
+  return site?.site_kind || "IAU feature centre";
+}
+
 function renderVerdictReset() {
   els.verdictOut.innerHTML =
     '<p class="placeholder">Press <em>Compute verdict</em>. The engine reads the ' +
@@ -173,6 +194,12 @@ function computeVerdict() {
 ` +
     `longest dark run ${hours(v.summary.longestDarkH)} \u00b7 ` +
     `Earth any-limb run ${hours(v.summary.earthLongestAnyH)}</div>`);
+  if (state.site) {
+    html.push(`<p class="note caveat">Measured at the ${siteKind(state.site)} ` +
+      `${fmtLatLon(state.site)}. Published illumination figures usually describe ` +
+      `a rim peak or a candidate landing pixel, so they are not directly ` +
+      `comparable to a value measured at the feature centre.</p>`);
+  }
   els.verdictOut.innerHTML = html.join("");
   els.verdictSpan.textContent = v.spanLabel;
 

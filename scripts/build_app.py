@@ -155,6 +155,7 @@ def plan_bundle() -> dict:
             site_records.append({
                 "id": sid,
                 "name": site["name"],
+                "site_kind": site.get("site_kind", "IAU feature centre"),
                 "lat": site["lat"],
                 "lon": site["lon"],
                 "horizon": f"artifacts/horizon/{sid}.bin",

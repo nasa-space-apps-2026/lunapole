@@ -45,6 +45,9 @@ app/dist/
 # --- demo recording: large; keep a copy on the demo laptop, not in git ---
 docs/demo-fallback.mp4
 
+# --- agent transcript exports: local scratch, not project content ---
+20??-??-??-??????-*.txt
+
 # --- python ---
 __pycache__/
 *.py[cod]

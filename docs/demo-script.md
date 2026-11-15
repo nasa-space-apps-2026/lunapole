@@ -133,6 +133,16 @@ adds more than ~20 words, cut the Earth map segment, not the limitations.
 
 ## Judge Q&A (short answers)
 
+- **Your number is lower than the published figure.** Correct, and it is the
+  same model, not a different one. Every site in the catalogue is an **IAU
+  feature centre** — the Gazetteer's anchor for the named feature — and the
+  strip above the panels says so on every site. Published percentages describe
+  a **rim peak or a candidate landing pixel**, which can sit a kilometre or
+  more above and several kilometres away from the centre. On this DEM the
+  Shackleton centre is 1515 m with terrain 7 km lower within 10 km: it is on
+  the crater's inner slope, not the rim. The engine is coordinate-driven
+  (`horizon_profile(dem, lat, lon)`), so pointing it at a rim coordinate
+  returns the rim number. The label was the problem; the arithmetic was not.
 - **Why only one year?** The 18.6-year map is implemented (`maps.py --full-cycle`)
   but not baked; a labelled 1-year map is honest, an unlabelled 18.6-year claim is
   not. The `full` profile adds 18.6-year per-site point runs for the verdict.
